@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="dice.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://bootswatch.com/4/yeti/bootstrap.min.css">
+
+    <title>Dice your life</title>
+    <style>
+      body {
+        background-color: rgb(2, 124, 2);
+        text-align: center;
+        color: white;
+        font-size: 40px;
+      }
+      #result {
+        font-size: 50px;
+        font-weight: bold;
+      }
+      button {
+        padding: 10px 35px 10px 35px;
+        background-color: darkgoldenrod;
+        border: 1px solid darkgoldenrod;  
+        color: white;
+        font-size: 30px;
+        font-weight: bold;
+      }
+      #restart {
+        margin-top: 15px;
+      }
+      #new {
+        text-align: left;
+        display: none;
+      }
+      h3 {
+        font-size: 40px;
+        text-align: center;
+        margin: 0;
+      }
+      #btn {
+        padding: 10px 35px 10px 35px;
+        background-color: darkgoldenrod;
+        border: 1px solid darkgoldenrod;
+        color: white;
+        font-size: 25px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>DICE GAME</h1>
+    <p id="result">0</p>
+    <button id="roll">Roll Dice</button><br />
+    <button id="restart">Start All Over</button><br />
+    <p id="message"></p>
+    <p id="money">Money in bank: $100</p>
+    <!-- <button id="store">My Store</button><br />
+    <p id="tells"></p> -->
+    <!-- <form id="show">
+        <thead>
+          <tr>
+            <th>My Games</th>
+            <th>My Apps</th>
+          </tr>
+        </thead>
+        <tbody id="book-list"></tbody>
+    </form> -->
+    <pre id="new">
+       <h3> CHECK OUT OUR LIST OF OTHER GAMES AND APPS YOU CAN BUY</h3>
+        1. CARD GAME ($250) <button id="btn" class="btn1">Buy now</button><br>
+        2. TIC TAK GAME ($300) <button id="btn" class="btn2">Buy now</button><br>
+        3. ADVANCED DICE GAME ($150) <button id="btn" class="btn3">Buy now</button>
+        4. BOOK LIST APP($550) <button id="btn" class="btn4">Buy now</button>
+    </pre>
+    <script src="javascript.js"></script>
+  </body>
+</html>
