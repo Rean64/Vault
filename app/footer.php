@@ -565,7 +565,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Template Main JS File -->
 <script src="model/dist/js/main.js"></script>
-
-
-
-  </html>
+</html>
