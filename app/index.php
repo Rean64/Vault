@@ -333,14 +333,14 @@ $whatsAppLink = "https://wa.me/{$phoneNumber}?text={$message}";
     </div>
 </section>
 
-<!-- ======= Featured Article Section ======= -->
-    <div class="section-header mt-5" id="articles">
+<section class="activities mt-5">
+    <div class="section-header">
         <h1 class="main-title">
-            <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Latest ' : 'Derniers '); ?>
-            <span class="highlight"><?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Articles' : 'Articles'); ?></span>
+            <?php echo htmlspecialchars(($_SESSION['language'] ?? 'en') == 'en' ? 'Latest ' : 'Derniers '); ?>
+            <span class="highlight"><?php echo htmlspecialchars(($_SESSION['language'] ?? 'en') == 'en' ? 'Articles' : 'Articles'); ?></span>
         </h1>
         <p class="section-subtitle">
-            <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Discover our most recent activities and insights' : 'Découvrez nos activités et perspectives les plus récentes'); ?>
+            <?php echo htmlspecialchars(($_SESSION['language'] ?? 'en') == 'en' ? 'Discover our most recent activities and insights' : 'Découvrez nos activités et perspectives les plus récentes'); ?>
         </p>
     </div>
 
@@ -348,45 +348,37 @@ $whatsAppLink = "https://wa.me/{$phoneNumber}?text={$message}";
         <!-- Filter and Sort Options -->
         <div class="article-controls">
             <div class="filter-tabs">
-                <button class="filter-btn active" data-filter="all">
-                    <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'All' : 'Tous'); ?>
-                </button>
-                <button class="filter-btn" data-filter="recent">
-                    <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Recent' : 'Récents'); ?>
-                </button>
-                <button class="filter-btn" data-filter="popular">
-                    <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Popular' : 'Populaires'); ?>
-                </button>
+                <button class="filter-btn active" data-filter="all"><?php echo htmlspecialchars(($_SESSION['language'] ?? 'en') == 'en' ? 'All' : 'Tous'); ?></button>
+                <button class="filter-btn" data-filter="recent"><?php echo htmlspecialchars(($_SESSION['language'] ?? 'en') == 'en' ? 'Recent' : 'Récents'); ?></button>
+                <button class="filter-btn" data-filter="popular"><?php echo htmlspecialchars(($_SESSION['language'] ?? 'en') == 'en' ? 'Popular' : 'Populaires'); ?></button>
             </div>
             <div class="view-options">
-                <button class="view-btn active" data-view="grid" title="Grid View">
-                    <i class="fas fa-th"></i>
-                </button>
-                <button class="view-btn" data-view="list" title="List View">
-                    <i class="fas fa-list"></i>
-                </button>
+                <button class="view-btn active" data-view="grid" title="Grid View"><i class="fas fa-th"></i></button>
+                <button class="view-btn" data-view="list" title="List View"><i class="fas fa-list"></i></button>
             </div>
         </div>
 
         <div class="articles-grid" id="articlesContainer">
-    <?php
-    include_once 'control/config.php';
-    $sql = "SELECT id, titleEnglish, titleFrench, descEnglish, descFrench, category, image, created_at, tags, status, views, likes, comment FROM Posts WHERE status = 'PUBLISHED' ORDER BY created_at DESC LIMIT 6";
-    $result = mysqli_query($conn, $sql);
-    $lang = $_SESSION['language'] ?? 'en';
-    
-    if ($result && mysqli_num_rows($result) > 0) {
-        while ($article = mysqli_fetch_assoc($result)) {
-            $title = $lang === 'en' ? $article['titleEnglish'] : $article['titleFrench'];
-            $description = $lang === 'en' ? $article['descEnglish'] : $article['descFrench'];
-            $strippedDescription = strip_tags($description);
-            $truncatedDescription = strlen($strippedDescription) > 120 ? substr($strippedDescription, 0, 120) . '...' : $strippedDescription;
-            $readTime = ceil(strlen($strippedDescription) / 200) ?: 3;
-            $viewCount = (int)($article['views'] ?? 0);
-            $publishDate = date_format(date_create($article['created_at']), $lang === 'en' ? 'M d, Y' : 'd M Y');
-            $tags = $article['tags'] ? implode(' ', array_map(fn($tag) => '#' . trim($tag), array_slice(explode(',', $article['tags']), 0, 2))) : '';
-            $likeCount = (int)($article['likes'] ?? 0);
-            $commentCount = (int)($article['comment'] ?? 0);
+            <?php
+            include_once 'control/config.php';
+            $lang = $_SESSION['language'] ?? 'en';
+            // Fetch articles for the current page with comment count
+            $sql = "SELECT p.*, COUNT(c.id) AS comment_count FROM Posts p LEFT JOIN comments c ON p.id = c.article_id WHERE p.status = 'PUBLISHED' GROUP BY p.id ORDER BY p.created_at DESC LIMIT 6";
+            $result = mysqli_query($conn, $sql);
+
+            if ($result && mysqli_num_rows($result) > 0) {
+                while ($article = mysqli_fetch_assoc($result)) {
+                    $title = $lang === 'en' ? $article['titleEnglish'] : $article['titleFrench'];
+                    $description = $lang === 'en' ? $article['descEnglish'] : $article['descFrench'];
+                    $strippedDescription = strip_tags($description);
+                    $truncatedDescription = strlen($strippedDescription) > 120 ? substr($strippedDescription, 0, 120) . '...' : $strippedDescription;
+                    $readTime = ceil(strlen($strippedDescription) / 200) ?: 3;
+                    $viewCount = (int)($article['views'] ?? 0);
+                    $publishDate = date_format(date_create($article['created_at']), $lang === 'en' ? 'M d, Y' : 'd M Y');
+                    $tags = $article['tags'] ? implode(' ', array_map(fn($tag) => '#' . trim($tag), array_slice(explode(',', $article['tags']), 0, 2))) : '';
+                    $likeCount = (int)($article['likes'] ?? 0);
+                    $commentCount = (int)($article['comment_count'] ?? 0);
+
             ?>
             <article class="article-card" data-category="<?php echo htmlspecialchars(strtolower($article['category'] ?? 'general')); ?>" data-id="article-<?php echo htmlspecialchars($article['id']); ?>">
                 <div class="article-image">
@@ -423,95 +415,697 @@ $whatsAppLink = "https://wa.me/{$phoneNumber}?text={$message}";
                         <button class="engagement-btn like-btn" data-count="<?php echo $likeCount; ?>">
                             <i class="far fa-heart"></i> <span class="count"><?php echo $likeCount; ?></span>
                         </button>
-                        <button class="engagement-btn comment-btn" data-count="<?php echo $commentCount; ?>">
+                        <button class="engagement-btn comment-btn" data-id="<?php echo htmlspecialchars($article['id']); ?>" data-count="<?php echo $commentCount; ?>">
                             <i class="far fa-comment"></i> <span class="count"><?php echo $commentCount; ?></span>
                         </button>
                     </div>
                 </div>
             </article>
             <?php
-        }
-        mysqli_close($conn);
-    } else {
-        echo '<div class="no-articles">' . htmlspecialchars($lang === 'en' ? 'No articles found.' : 'Aucun article trouvé.') . '</div>';
-    }
-    ?>
-</div>
+                }
+            } else {
+                echo '<div class="no-articles">' . htmlspecialchars($lang === 'en' ? 'No articles found.' : 'Aucun article trouvé.') . '</div>';
+            }
+            ?>
+        </div>
 
+        <!-- Navigation to All Articles -->
+        <div class="section-footer text-center mt-5">
+            <a href="articles.php" class="view-all-btn">
+                <span><?php echo htmlspecialchars(($_SESSION['language'] ?? 'en') == 'en' ? 'View All Articles' : 'Voir Tous les Articles'); ?></span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
     </div>
+</section>
 
-    
-
-    <!-- Enhanced Popup Modal -->
-    <div id="enhancedPopup" class="enhanced-popup">
-        <div class="popup-backdrop"></div>
-        <div class="popup-container">
-            <div class="popup-header">
-                <button class="popup-close-btn">
-                    <i class="fas fa-times"></i>
-                </button>
-                <div class="popup-actions">
-                    <button class="popup-action-btn" id="popupBookmark">
-                        <i class="far fa-bookmark"></i>
-                    </button>
-                    <button class="popup-action-btn" id="popupShare">
-                        <i class="fas fa-share-alt"></i>
-                    </button>
+<!-- Enhanced Popup Modal -->
+<div id="enhancedPopup" class="enhanced-popup">
+    <div class="popup-backdrop"></div>
+    <div class="popup-container">
+        <div class="popup-header">
+            <button class="popup-close-btn"><i class="fas fa-times"></i></button>
+            <div class="popup-actions">
+                <button class="popup-action-btn" id="popupBookmark"><i class="far fa-bookmark"></i></button>
+                <button class="popup-action-btn" id="popupShare"><i class="fas fa-share-alt"></i></button>
+            </div>
+        </div>
+        <div class="popup-body">
+            <div class="popup-image-section">
+                <img id="popupImage" src="" alt="" class="popup-main-image">
+                <div class="popup-image-overlay">
+                    <div class="popup-category" id="popupCategory"></div>
                 </div>
             </div>
-
-            <div class="popup-body">
-                <div class="popup-image-section">
-                    <img id="popupImage" src="" alt="" class="popup-main-image">
-                    <div class="popup-image-overlay">
-                        <div class="popup-category" id="popupCategory"></div>
-                    </div>
+            <div class="popup-content-section">
+                <div class="popup-meta">
+                    <span id="popupDate"></span>
+                    <span id="popupReadTime"></span>
                 </div>
-
-                <div class="popup-content-section">
-                    <div class="popup-meta">
-                        <span id="popupDate"></span>
-                        <span id="popupReadTime"></span>
-                    </div>
-                    
-                    <h1 id="popupTitle" class="popup-main-title"></h1>
-                    
-                    <div class="popup-engagement">
-                        <button class="popup-engage-btn" id="popupLike">
-                            <i class="far fa-heart"></i>
-                            <spann id="popupLikes">0</spann>
-                        </button>
-                        <button class="popup-engage-btn" id="popupComment">
-                            <i class="far fa-comment"></i>
-                            <span>0</span>
-                        </button>
-                    </div>
-
-                    <div id="popupDescription" class="popup-main-content"></div>
-                    
-                    <div class="popup-tags" id="popupTags"></div>
-                    
-                    <div class="popup-footer-actions">
-                        <button class="popup-cta-btn primary">
-                            <?php echo $_SESSION['language'] == 'en' ? 'Learn More' : 'En Savoir Plus'; ?>
-                        </button>
-                        <button class="popup-cta-btn secondary" id="openCommentsBtn">
-                            <?php echo $_SESSION['language'] == 'en' ? 'Comments' : 'Commentaires'; ?>
-                        </button>
-                    </div>
+                <h1 id="popupTitle" class="popup-main-title"></h1>
+                <div class="popup-engagement">
+                    <button class="popup-engage-btn" id="popupLike"><i class="far fa-heart"></i> <span id="popupLikes">0</span></button>
+                    <button class="popup-engage-btn" id="popupCommentBtn"><i class="far fa-comment"></i> <span id="popupCommentCount">0</span></button>
                 </div>
+                <div id="popupDescription" class="popup-main-content"></div>
+                <div class="popup-tags" id="popupTags"></div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Navigation to All Articles -->
-    <div class="section-footer">
-        <a href="articles.php" class="view-all-btn">
-            <span><?php echo $_SESSION['language'] == 'en' ? 'View All Articles' : 'Voir Tous les Articles'; ?></span>
-            <i class="fas fa-arrow-right"></i>
-        </a>
+<!-- Comment Modal -->
+<div id="commentModal" class="enhanced-popup">
+    <div class="popup-backdrop"></div>
+    <div class="popup-container">
+        <div class="popup-header">
+            <h3 class="modal-title">Comments</h3>
+            <button class="popup-close-btn" id="commentModalClose"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="popup-body">
+            <div class="comments-section">
+                <h4>Leave a Comment</h4>
+                <form id="commentForm" class="comment-form">
+                    <input type="hidden" id="commentArticleId" name="article_id">
+                    <input type="hidden" id="commentParentId" name="parent_id" value="0">
+                    <div class="form-group mb-3"><input type="text" class="form-control" id="commentAuthor" name="author" placeholder="Your Name" required></div>
+                    <div class="form-group mb-3"><textarea class="form-control" id="commentText" name="comment" rows="3" placeholder="Your Comment" required></textarea></div>
+                    <button type="submit" class="btn btn-primary">Submit Comment</button>
+                </form>
+                <h4 class="mt-4">All Comments</h4>
+                <div id="commentsList" class="comments-list"></div>
+            </div>
+        </div>
     </div>
-</section>
+</div>
+
+<style>
+/* Engagement Bar and Buttons */
+.engagement-bar {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 8px 0;
+    border-top: 1px solid #e5e7eb;
+}
+
+.engagement-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background-color: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.engagement-btn:hover {
+    background-color: #10b981;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.engagement-btn i {
+    font-size: 16px;
+}
+
+.engagement-btn .count {
+    font-size: 14px;
+}
+
+.engagement-btn.active {
+    background-color: #10b981;
+    color: #ffffff;
+}
+
+/* Popup Engagement Buttons */
+.popup-engage-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #374151;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.popup-engage-btn:hover {
+    background-color: #10b981;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.popup-engage-btn i {
+    font-size: 18px;
+}
+
+.popup-engage-btn span {
+    font-size: 16px;
+}
+
+/* Enhanced Popup Modal Styling */
+.enhanced-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+}
+
+.enhanced-popup.active {
+    display: block;
+}
+
+.popup-backdrop {
+    background: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.popup-container {
+    background: #ffffff;
+    border-radius: 12px;
+    max-width: 1200px; /* Increased from 600px */
+    max-height: 95vh; /* Limit height to 85% of viewport */
+    margin: 3% auto;
+    padding: 20px;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    overflow: hidden; /* Prevent inner content from overflowing */
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.popup-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #374151;
+}
+
+.popup-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.popup-action-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #374151;
+    transition: color 0.2s ease;
+}
+
+.popup-action-btn:hover {
+    color: #10b981;
+}
+
+.popup-body {
+    display: flex;
+    /* flex-direction: column; */
+    gap: 15px;
+    max-height: 75vh; /* Ensure body fits within modal */
+    /* overflow-y: auto;  */
+    scrollbar-width: thin;
+}
+
+.popup-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.popup-body::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.popup-image-section {
+    flex-shrink: 0; /* Prevent image from shrinking */
+}
+
+.popup-main-image {
+    width: 100%;
+    height: 300px; /* Fixed height for consistency */
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.popup-image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-start;
+    padding: 10px;
+}
+
+.popup-category {
+    background: #10b981;
+    color: #ffffff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.popup-content-section {
+    padding: 15px;
+    flex-grow: 1;
+    font-weight: 300;
+}
+
+.popup-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    color: #777;
+    margin-bottom: 10px;
+}
+
+.popup-main-title {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.popup-engagement {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.popup-main-content {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #444;
+    margin-bottom: 15px;
+    max-height: 400px; /* Limit content height */
+    overflow-y: auto; 
+    scrollbar-width: thin;
+}
+
+.popup-main-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.popup-main-content::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.popup-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-bottom:20px;
+    font-weight: 500;
+}
+
+.tag-item {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+/* Comment Modal Styles */
+.comments-section {
+    padding: 20px 10px 80px 0px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    max-width: 800px;
+    margin: auto;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    max-height: 600px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.comments-section::-webkit-scrollbar {
+    width: 6px;
+}
+
+.comments-section::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.comments-section h4 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: #333;
+    border-bottom: 2px solid #00175de8;
+    padding-bottom: 5px;
+}
+
+.comment-form .form-group {
+    margin-bottom: 15px;
+}
+
+.comment-form .form-control {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.comment-form .form-control:focus {
+    border-color: #00175de8;
+    outline: none;
+}
+
+.comment-form .btn-primary {
+    background-color: #00175de8;
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 6px;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.comment-form .btn-primary:hover {
+    background-color: #00175de8;
+}
+
+.comments-list {
+    margin-top: 30px;
+    padding-bottom: 60px;
+}
+
+.comment-item {
+    background-color: #f8f8f8;
+    padding: 18px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+}
+
+.comment-item p {
+    margin: 0;
+    color: #444;
+    line-height: 1.5;
+}
+
+.comment-item p strong {
+    color: #00175de8;
+    font-weight: 600;
+}
+
+.comment-item small {
+    font-size: 0.85rem;
+    color: #777;
+    margin-left: 12px;
+}
+
+.comment-item .reply-btn {
+    background: none;
+    border: none;
+    color: #00175de8;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 4px 8px;
+    transition: color 0.3s ease;
+}
+
+.comment-item .reply-btn:hover {
+    color: #00175de8;
+    text-decoration: underline;
+}
+
+.comment-item .replies-list {
+    margin-left: 25px;
+    margin-top: 12px;
+    border-left: 2px solid #ddd;
+    padding-left: 15px;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    .engagement-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    .engagement-btn i {
+        font-size: 14px;
+    }
+    .engagement-btn .count {
+        font-size: 12px;
+    }
+    .popup-container {
+        margin: 10px;
+        max-width: 95vw; /* Nearly full width on mobile */
+        max-height: 90vh;
+    }
+    .popup-body {
+        max-height: 80vh;
+    }
+    .popup-main-image {
+        height: 200px; /* Smaller image on mobile */
+    }
+    .popup-main-title {
+        font-size: 1.5rem;
+    }
+    .popup-main-content {
+        max-height: 300px; /* Adjust content height for mobile */
+    }
+    .comments-section {
+        padding: 15px 5px;
+        max-height: 500px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const articlesContainer = document.getElementById('articlesContainer');
+    const popup = document.getElementById('enhancedPopup');
+    const popupBackdrop = popup.querySelector('.popup-backdrop');
+    const closeBtn = popup.querySelector('.popup-close-btn');
+    const lang = '<?php echo $_SESSION['language'] ?? 'en'; ?>';
+
+    const popupElements = {
+        image: document.getElementById('popupImage'),
+        category: document.getElementById('popupCategory'),
+        date: document.getElementById('popupDate'),
+        readTime: document.getElementById('popupReadTime'),
+        title: document.getElementById('popupTitle'),
+        likes: document.getElementById('popupLikes'),
+        commentCount: document.getElementById('popupCommentCount'),
+        description: document.getElementById('popupDescription'),
+        tags: document.getElementById('popupTags'),
+        likeBtn: document.getElementById('popupLike'),
+        commentBtn: document.getElementById('popupCommentBtn'),
+        commentModal: document.getElementById('commentModal'),
+        commentModalClose: document.getElementById('commentModalClose'),
+        commentForm: document.getElementById('commentForm'),
+        commentsList: document.getElementById('commentsList'),
+        commentArticleId: document.getElementById('commentArticleId')
+    };
+
+    function htmlspecialchars(str) {
+        if (typeof str !== 'string') return '';
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return str.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Handle filter buttons
+    document.querySelectorAll('.filter-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            document.querySelector('.filter-btn.active').classList.remove('active');
+            this.classList.add('active');
+            const filter = this.dataset.filter;
+            const articles = document.querySelectorAll('.article-card');
+            articles.forEach(article => {
+                if (filter === 'all' || article.dataset.category === filter) {
+                    article.style.display = 'block';
+                } else {
+                    article.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Handle view buttons
+    document.querySelectorAll('.view-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            document.querySelector('.view-btn.active').classList.remove('active');
+            this.classList.add('active');
+            const view = this.dataset.view;
+            articlesContainer.className = `articles-grid ${view}-view`;
+        });
+    });
+
+    let readTimeInterval;
+
+    function openPopup(articleData) {
+        const article = JSON.parse(articleData);
+        const title = lang === 'en' ? article.titleEnglish : article.titleFrench;
+        const description = lang === 'en' ? article.descEnglish : article.descFrench;
+        const strippedDescription = description.replace(/<[^>]+>/g, '');
+        let readTime = Math.ceil(strippedDescription.length / 200) || 3;
+        const publishDate = new Date(article.created_at).toLocaleDateString(lang === 'en' ? 'en-US' : 'fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
+        const tagsHTML = article.tags ? article.tags.split(',').map(tag => `<span class="tag-item">#${tag.trim()}</span>`).join('') : '';
+
+        popupElements.image.src = `model/assets/images/activities/${article.image || 'default.jpg'}`;
+        popupElements.image.alt = htmlspecialchars(title);
+        popupElements.category.textContent = article.category || 'General';
+        popupElements.date.textContent = publishDate;
+        popupElements.readTime.textContent = `${readTime} ${lang === 'en' ? 'min read' : 'min de lecture'}`;
+        popupElements.title.textContent = title;
+        popupElements.likes.textContent = parseInt(article.likes || 0);
+        popupElements.commentCount.textContent = parseInt(article.comment_count || 0);
+        popupElements.description.innerHTML = description;
+        popupElements.tags.innerHTML = tagsHTML;
+
+        popup.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Start read time counter
+        let seconds = 0;
+        readTimeInterval = setInterval(() => {
+            seconds++;
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            const timeString = `${minutes}m ${remainingSeconds}s`;
+            popupElements.readTime.textContent = timeString;
+        }, 1000);
+
+        popupElements.likeBtn.onclick = () => {
+            console.log('Liked article:', article.id);
+            // Implement like functionality (e.g., AJAX to update likes)
+        };
+        popupElements.commentBtn.onclick = () => openCommentModal(article.id);
+    }
+
+    function closePopup() {
+        popup.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    async function openCommentModal(articleId) {
+        if (popupElements.commentModal) {
+            popupElements.commentModal.classList.add('active');
+            popupElements.commentArticleId.value = articleId;
+            await loadComments(articleId);
+        }
+    }
+
+    function closeCommentModal() {
+        if (popupElements.commentModal) {
+            popupElements.commentModal.classList.remove('active');
+        }
+    }
+
+    async function loadComments(articleId) {
+        try {
+            const response = await fetch(`control/get-comments.php?article_id=${articleId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const comments = await response.json();
+            renderComments(comments);
+        } catch (error) {
+            console.error('Failed to load comments:', error);
+            if (popupElements.commentsList) {
+                popupElements.commentsList.innerHTML = '<p>Error loading comments.</p>';
+            }
+        }
+    }
+
+    function renderComments(comments) {
+        if (popupElements.commentsList) {
+            popupElements.commentsList.innerHTML = '';
+            if (comments.length === 0) {
+                popupElements.commentsList.innerHTML = '<p>No comments yet. Be the first to comment!</p>';
+                return;
+            }
+            comments.forEach(comment => {
+                const commentElement = document.createElement('div');
+                commentElement.className = 'comment-item';
+                commentElement.innerHTML = `
+                    <p><strong>${htmlspecialchars(comment.author)}:</strong> ${htmlspecialchars(comment.comment)}</p>
+                    <small>${new Date(comment.created_at).toLocaleString()}</small>
+                `;
+                popupElements.commentsList.appendChild(commentElement);
+            });
+        }
+    }
+
+    if (popupElements.commentForm) {
+        popupElements.commentForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            try {
+                const response = await fetch('control/add-comment.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                if (result.success) {
+                    this.reset();
+                    loadComments(formData.get('article_id'));
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Failed to submit comment:', error);
+                alert('An error occurred while submitting your comment.');
+            }
+        });
+    }
+
+    // Initial event listeners for read-more and comment buttons
+    document.querySelectorAll('.read-more-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            openPopup(this.dataset.article);
+        });
+    });
+    document.querySelectorAll('.comment-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            openCommentModal(this.dataset.id);
+        });
+    });
+
+    if (closeBtn) closeBtn.addEventListener('click', closePopup);
+    if (popupBackdrop) popupBackdrop.addEventListener('click', closePopup);
+    if (popupElements.commentModalClose) popupElements.commentModalClose.addEventListener('click', closeCommentModal);
+    const commentBackdrop = document.querySelector('#commentModal .popup-backdrop');
+    if (commentBackdrop) commentBackdrop.addEventListener('click', closeCommentModal);
+});
+</script>
+
 
 <!-- ======= Author Spotlight Section ======= -->
 <section id="author-spotlight" class="author-spotlight">
@@ -1130,6 +1724,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function closePopup() {
         popup.classList.remove('active');
         document.body.style.overflow = 'auto';
+        clearInterval(readTimeInterval);
     }
 
     function openCommentModal(articleId) {

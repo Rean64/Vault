@@ -42,8 +42,8 @@ require_once "header.php";
             $total_articles = mysqli_fetch_assoc($total_result)['total'];
             $total_pages = ceil($total_articles / $articles_per_page);
 
-            // Fetch articles for the current page
-            $sql = "SELECT id, titleEnglish, titleFrench, descEnglish, descFrench, category, image, created_at, tags, status, views, likes, comment FROM Posts WHERE status = 'PUBLISHED' ORDER BY created_at DESC LIMIT $offset, $articles_per_page";
+            // Fetch articles for the current page with comment count
+            $sql = "SELECT p.*, COUNT(c.id) AS comment_count FROM Posts p LEFT JOIN comments c ON p.id = c.article_id WHERE p.status = 'PUBLISHED' GROUP BY p.id ORDER BY p.created_at DESC LIMIT $offset, $articles_per_page";
             $result = mysqli_query($conn, $sql);
 
             if ($result && mysqli_num_rows($result) > 0) {
@@ -57,7 +57,7 @@ require_once "header.php";
                     $publishDate = date_format(date_create($article['created_at']), $lang === 'en' ? 'M d, Y' : 'd M Y');
                     $tags = $article['tags'] ? implode(' ', array_map(fn($tag) => '#' . trim($tag), array_slice(explode(',', $article['tags']), 0, 2))) : '';
                     $likeCount = (int)($article['likes'] ?? 0);
-                    $commentCount = isset($article['comment']) && is_array($article['comment']) ? count($article['comment']) : 0;
+                    $commentCount = (int)($article['comment_count'] ?? 0);
 
             ?>
             <article class="article-card" data-category="<?php echo htmlspecialchars(strtolower($article['category'] ?? 'general')); ?>" data-id="article-<?php echo htmlspecialchars($article['id']); ?>">
@@ -137,7 +137,6 @@ require_once "header.php";
             <div class="popup-actions">
                 <button class="popup-action-btn" id="popupBookmark"><i class="far fa-bookmark"></i></button>
                 <button class="popup-action-btn" id="popupShare"><i class="fas fa-share-alt"></i></button>
-                <button class="popup-action-btn" id="popupPrint"><i class="fas fa-print"></i></button>
             </div>
         </div>
         <div class="popup-body">
@@ -611,9 +610,9 @@ document.addEventListener('DOMContentLoaded', function () {
         readTime: document.getElementById('popupReadTime'),
         title: document.getElementById('popupTitle'),
         likes: document.getElementById('popupLikes'),
+        commentCount: document.getElementById('popupCommentCount'),
         description: document.getElementById('popupDescription'),
         tags: document.getElementById('popupTags'),
-        printBtn: document.getElementById('popupPrint'),
         likeBtn: document.getElementById('popupLike'),
         commentBtn: document.getElementById('popupCommentBtn'),
         commentModal: document.getElementById('commentModal'),
@@ -796,13 +795,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    let readTimeInterval;
+
     function openPopup(articleData) {
         const article = JSON.parse(articleData);
-        console.log('Opening popup for article:', article);
         const title = lang === 'en' ? article.titleEnglish : article.titleFrench;
         const description = lang === 'en' ? article.descEnglish : article.descFrench;
         const strippedDescription = description.replace(/<[^>]+>/g, '');
-        const readTime = Math.ceil(strippedDescription.length / 200) || 3;
+        let readTime = Math.ceil(strippedDescription.length / 200) || 3;
         const publishDate = new Date(article.created_at).toLocaleDateString(lang === 'en' ? 'en-US' : 'fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
         const tagsHTML = article.tags ? article.tags.split(',').map(tag => `<span class="tag-item">#${tag.trim()}</span>`).join('') : '';
 
@@ -813,13 +813,23 @@ document.addEventListener('DOMContentLoaded', function () {
         popupElements.readTime.textContent = `${readTime} ${lang === 'en' ? 'min read' : 'min de lecture'}`;
         popupElements.title.textContent = title;
         popupElements.likes.textContent = parseInt(article.likes || 0);
+        popupElements.commentCount.textContent = parseInt(article.comment_count || 0);
         popupElements.description.innerHTML = description;
         popupElements.tags.innerHTML = tagsHTML;
 
         popup.classList.add('active');
         document.body.style.overflow = 'hidden';
 
-        popupElements.printBtn.onclick = () => window.print();
+        // Start read time counter
+        let seconds = 0;
+        readTimeInterval = setInterval(() => {
+            seconds++;
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            const timeString = `${minutes}m ${remainingSeconds}s`;
+            popupElements.readTime.textContent = timeString;
+        }, 1000);
+
         popupElements.likeBtn.onclick = () => {
             console.log('Liked article:', article.id);
             // Implement like functionality (e.g., AJAX to update likes)
@@ -830,6 +840,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function closePopup() {
         popup.classList.remove('active');
         document.body.style.overflow = 'auto';
+        clearInterval(readTimeInterval);
     }
 
     async function openCommentModal(articleId) {

@@ -32,7 +32,7 @@
                     <p>Subscribe for the latest articles and updates</p>
                     <form action="/subscribe" method="post" class="d-flex">
                         <input type="email" name="email" placeholder="Your Email" style="padding: 8px; border-radius: 4px 0 0 4px; border: 1px solid #ccc;">
-                        <button type="submit" style="padding: 8px 12px; border-radius: 0 4px 4px 0; background: #297559; color: white; border: none;">
+                        <button type="submit" style="padding: 8櫃px 12px; border-radius: 0 4px 4px 0; background: #297559; color: white; border: none;">
                             <i class="bi bi-arrow-right"></i>
                         </button>
                     </form>
@@ -112,7 +112,7 @@
 
     <div class="container">
         <div class="copyright">
-            &copy; Copyright <strong><span>2025</span></strong>. Tous droits réservés
+            &copy; Copyright <strong><span>2025</span></strong>. All Rights Reserved
         </div>
         <div class="credits">
             Conçu par <span class="text-primary">TECH<span class="text-warning">TEAM</span></span>
@@ -136,433 +136,419 @@
 
 <script src="model/dist/js/main.js"></script>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const articlesContainer = document.getElementById('articlesContainer');
+    const favoritesContainer = document.getElementById('favorites-container');
+    const favoritesSection = document.getElementById('favorites-section');
+    const popup = document.getElementById('enhancedPopup');
+    const lang = '<?php echo $_SESSION['language'] ?? 'en'; ?>';
+
+    const popupElements = {
+        image: document.getElementById('popupImage'),
+        category: document.getElementById('popupCategory'),
+        date: document.getElementById('popupDate'),
+        readTime: document.getElementById('popupReadTime'),
+        title: document.getElementById('popupTitle'),
+        likes: document.getElementById('popupLikes'),
+        commentCount: document.getElementById('popupCommentCount'),
+        description: document.getElementById('popupDescription'),
+        tags: document.getElementById('popupTags'),
+        likeBtn: document.getElementById('popupLike'),
+        bookmarkBtn: document.getElementById('popupBookmark'),
+        commentBtn: document.getElementById('popupCommentBtn'),
+        commentModal: document.getElementById('commentModal'),
+        commentModalClose: document.getElementById('commentModalClose'),
+        commentForm: document.getElementById('commentForm'),
+        commentsList: document.getElementById('commentsList'),
+        commentArticleId: document.getElementById('commentArticleId')
+    };
+
+    let readTimeInterval;
+    let secondsElapsed = 0;
+
+    function htmlspecialchars(str) {
+        if (typeof str !== 'string') return '';
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return str.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function renderArticle(article) {
+        const title = lang === 'en' ? article.titleEnglish : article.titleFrench;
+        const description = lang === 'en' ? article.descEnglish : article.descFrench;
+        const strippedDescription = description.replace(/<[^>]+>/g, '');
+        const truncatedDescription = strippedDescription.length > 120 ? strippedDescription.substring(0, 120) + '...' : strippedDescription;
+        const readTime = Math.ceil(strippedDescription.length / 200) || 3;
+        const viewCount = parseInt(article.views || 0).toLocaleString();
+        const publishDate = new Date(article.created_at).toLocaleDateString(lang === 'en' ? 'en-US' : 'fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
+        const tags = article.tags ? article.tags.split(',').slice(0, 2).map(tag => `#${tag.trim()}`).join(' ') : '';
+        const likeCount = parseInt(article.likes || 0);
+        const commentCount = parseInt(article.comment_count || 0);
+        const isLiked = localStorage.getItem(`liked_${article.id}`) === 'true';
+        const isBookmarked = localStorage.getItem(`bookmarked_${article.id}`) === 'true';
+
+        return `
+            <article class="article-card" data-id="article-${article.id}" data-article='${JSON.stringify(article)}'>
+                <div class="article-image">
+                    <img src="model/assets/images/activities/${article.image || 'default.jpg'}" alt="${htmlspecialchars(title)}" loading="lazy">
+                    <div class="article-overlay">
+                        <div class="article-category">${htmlspecialchars(article.category || 'General')}</div>
+                        <div class="article-actions">
+                            <button class="action-btn bookmark-btn ${isBookmarked ? 'active' : ''}" title="${lang === 'en' ? 'Bookmark' : 'Marquer'}">
+                                <i class="far fa-bookmark"></i>
+                            </button>
+                            <button class="action-btn share-btn" title="${lang === 'en' ? 'Share' : 'Partager'}">
+                                <i class="fas fa-share-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="article-content">
+                    <div class="article-meta">
+                        <span class="meta-item"><i class="far fa-clock"></i> ${readTime} ${lang === 'en' ? 'min read' : 'min de lecture'}</span>
+                        <span class="meta-item"><i class="far fa-eye"></i> ${viewCount} ${lang === 'en' ? 'views' : 'vues'}</span>
+                        <span class="meta-item"><i class="far fa-calendar"></i> ${publishDate}</span>
+                    </div>
+                    <h3 class="article-title">${htmlspecialchars(title)}</h3>
+                    <p class="article-excerpt">${htmlspecialchars(truncatedDescription)}</p>
+                    <div class="article-footer">
+                        <div class="article-tags">${htmlspecialchars(tags)}</div>
+                        <div class="article-cta">
+                            <button class="read-more-btn">
+                                ${lang === 'en' ? 'Read More' : 'Lire Plus'} <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="engagement-bar">
+                        <button class="engagement-btn like-btn ${isLiked ? 'active' : ''}" data-count="${likeCount}">
+                            <i class="far fa-heart"></i> <span class="count">${likeCount}</span>
+                        </button>
+                        <button class="engagement-btn comment-btn" data-count="${commentCount}">
+                            <i class="far fa-comment"></i> <span class="count">${commentCount}</span>
+                        </button>
+                    </div>
+                </div>
+            </article>
+        `;
+    }
+
+    function openPopup(article) {
+        const title = lang === 'en' ? article.titleEnglish : article.titleFrench;
+        const description = lang === 'en' ? article.descEnglish : article.descFrench;
+        const strippedDescription = description.replace(/<[^>]+>/g, '');
+        let readTime = Math.ceil(strippedDescription.length / 200) || 3;
+        const publishDate = new Date(article.created_at).toLocaleDateString(lang === 'en' ? 'en-US' : 'fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
+        const tagsHTML = article.tags ? article.tags.split(',').map(tag => `<span class="tag-item">#${tag.trim()}</span>`).join('') : '';
+        const isLiked = localStorage.getItem(`liked_${article.id}`) === 'true';
+        const isBookmarked = localStorage.getItem(`bookmarked_${article.id}`) === 'true';
+
+        popupElements.image.src = `model/assets/images/activities/${article.image || 'default.jpg'}`;
+        popupElements.image.alt = htmlspecialchars(title);
+        popupElements.category.textContent = article.category || 'General';
+        popupElements.date.textContent = publishDate;
+        popupElements.readTime.textContent = `${readTime} ${lang === 'en' ? 'min read' : 'min de lecture'}`;
+        popupElements.title.textContent = title;
+        popupElements.likes.textContent = parseInt(article.likes || 0);
+        popupElements.commentCount.textContent = parseInt(article.comment_count || 0);
+        popupElements.description.innerHTML = description;
+        popupElements.tags.innerHTML = tagsHTML;
+        popupElements.likeBtn.classList.toggle('active', isLiked);
+        popupElements.bookmarkBtn.classList.toggle('active', isBookmarked);
+        popupElements.commentArticleId.value = article.id;
+
+        popup.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        secondsElapsed = 0;
+        readTimeInterval = setInterval(() => {
+            secondsElapsed++;
+            const minutes = Math.floor(secondsElapsed / 60);
+            const remainingSeconds = secondsElapsed % 60;
+            const timeString = `${minutes}m ${remainingSeconds}s`;
+            popupElements.readTime.textContent = timeString;
+        }, 1000);
+    }
+
+    function closePopup() {
+        popup.classList.remove('active');
+        document.body.style.overflow = 'auto';
+        clearInterval(readTimeInterval);
+
+        const articleId = popupElements.commentArticleId.value;
+
+        if (secondsElapsed > 0) {
+            fetch('control/save-read-time.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `article_id=${articleId}&read_time=${secondsElapsed}`
+            });
+        }
+    }
+
+    function handleLike(articleId, likeButton) {
+        // Ensure articleId is a number
+        const numericArticleId = articleId.replace('article-', '');
+
+        const likeCountSpan = likeButton.querySelector('.count');
+        const currentLikes = parseInt(likeCountSpan.textContent);
+        // Determine the *initial* state before the click
+        const wasLiked = likeButton.classList.contains('active');
+        const action = wasLiked ? 'unlike' : 'like';
+
+        console.log(`[Like] Article ID: ${numericArticleId}, Action: ${action}, Was Liked: ${wasLiked}, Current Likes (UI): ${currentLikes}`);
+
+        // Optimistic UI Update
+        likeButton.classList.toggle('active', !wasLiked); // Toggle to the new state
+        likeCountSpan.textContent = wasLiked ? currentLikes - 1 : currentLikes + 1;
+        console.log(`[Like] Optimistic UI update: New likes (UI): ${likeCountSpan.textContent}`);
+
+        fetch(`control/like.php`, { // Use relative path
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `article_id=${numericArticleId}&action=${action}`
+        })
+        .then(response => {
+            console.log(`[Like] Server response status: ${response.status}`);
+            if (!response.ok) {
+                // If server response is not OK, throw error to trigger catch block
+                return response.json().then(err => { throw new Error(`Server error: ${err.message || response.statusText}`); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('[Like] Server response data:', data);
+            if (data.status === `${action}d`) { // Check for expected status (e.g., 'liked', 'unliked')
+                // Success: Update localStorage to reflect the *new* state
+                if (action === 'like') {
+                    localStorage.setItem(`liked_${numericArticleId}`, 'true');
+                    console.log(`[Like] Successfully liked. localStorage updated: liked_${numericArticleId}=true`);
+                } else {
+                    localStorage.removeItem(`liked_${numericArticleId}`);
+                    console.log(`[Like] Successfully unliked. localStorage updated: liked_${numericArticleId} removed`);
+                }
+            } else {
+                // Server returned OK but unexpected status, revert UI
+                console.error(`[Like] Server returned unexpected status: ${data.status}. Reverting UI.`);
+                throw new Error(`Unexpected server response: ${data.message || data.status}`);
+            }
+        })
+        .catch(error => {
+            console.error('[Like] Error during like operation:', error);
+            // Revert UI to original state
+            likeButton.classList.toggle('active', wasLiked); // Revert to original state
+            likeCountSpan.textContent = currentLikes; // Revert count
+            // Revert localStorage to original state
+            if (wasLiked) {
+                localStorage.setItem(`liked_${numericArticleId}`, 'true');
+            } else {
+                localStorage.removeItem(`liked_${numericArticleId}`);
+            }
+            alert('Failed to update like status. Please try again. Check console for details.');
+        });
+    }
+
+    function handleBookmark(articleId, bookmarkButton) {
+        // Ensure articleId is a number
+        const numericArticleId = articleId.replace('article-', '');
+
+        const isBookmarked = bookmarkButton.classList.contains('active');
+        bookmarkButton.classList.toggle('active');
+
+        if (isBookmarked) {
+            localStorage.removeItem(`bookmarked_${numericArticleId}`);
+            console.log(`Removed bookmarked_${numericArticleId} from localStorage`);
+        } else {
+            localStorage.setItem(`bookmarked_${numericArticleId}`, 'true');
+            console.log(`Set bookmarked_${numericArticleId} to true in localStorage`);
+        }
+        if (favoritesSection) {
+            loadFavorites();
+        }
+    }
+
+    function loadFavorites() {
+        const favoriteIds = Object.keys(localStorage)
+            .filter(key => key.startsWith('bookmarked_') && localStorage.getItem(key) === 'true')
+            .map(key => key.replace('bookmarked_', ''));
+
+        console.log('Loading favorites. IDs:', favoriteIds);
+
+        if (favoriteIds.length > 0) {
+            favoritesSection.style.display = 'block';
+            fetch(`control/get-articles-by-ids.php?ids=${JSON.stringify(favoriteIds)}`)
+                .then(response => {
+                    console.log('Fetch favorites response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Server error fetching favorites');
+                    }
+                    return response.json();
+                })
+                .then(articles => {
+                    console.log('Fetched favorite articles:', articles);
+                    favoritesContainer.innerHTML = articles.map(renderArticle).join('');
+                })
+                .catch(error => {
+                    console.error('Error loading favorites:', error);
+                    favoritesSection.style.display = 'none'; // Hide section on error
+                });
+        } else {
+            favoritesSection.style.display = 'none';
+            console.log('No bookmarked articles found.');
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        const readMoreBtn = e.target.closest('.read-more-btn');
+        if (readMoreBtn) {
+            const articleCard = readMoreBtn.closest('.article-card');
+            const article = JSON.parse(articleCard.dataset.article);
+            openPopup(article);
+            return; // Prevent further propagation
+        }
+
+        const likeBtn = e.target.closest('.engagement-btn.like-btn');
+        if (likeBtn) {
+            const articleCard = likeBtn.closest('.article-card');
+            handleLike(articleCard.dataset.id, likeBtn);
+            return; // Prevent further propagation
+        }
+
+        const bookmarkBtn = e.target.closest('.action-btn.bookmark-btn');
+        if (bookmarkBtn) {
+            const articleCard = bookmarkBtn.closest('.article-card');
+            handleBookmark(articleCard.dataset.id, bookmarkBtn);
+            return; // Prevent further propagation
+        }
+
+        if (e.target.closest('#popupLike')) {
+            handleLike(popupElements.commentArticleId.value, popupElements.likeBtn);
+            return; // Prevent further propagation
+        }
+
+        if (e.target.closest('#popupBookmark')) {
+            handleBookmark(popupElements.commentArticleId.value, popupElements.bookmarkBtn);
+            return; // Prevent further propagation
+        }
+
+        if (e.target.closest('.popup-close-btn') || e.target.classList.contains('popup-backdrop')) {
+            closePopup();
+            return; // Prevent further propagation
+        }
+
+        const commentBtn = e.target.closest('.engagement-btn.comment-btn');
+        if (commentBtn) {
+            const articleCard = commentBtn.closest('.article-card');
+            openCommentModal(articleCard.dataset.id);
+            return; // Prevent further propagation
+        }
+
+        if (e.target.closest('#popupCommentBtn')) {
+            openCommentModal(popupElements.commentArticleId.value);
+            return; // Prevent further propagation
+        }
+
+        if (e.target.closest('#commentModalClose') || e.target.classList.contains('popup-backdrop')) {
+            closeCommentModal();
+            return; // Prevent further propagation
+        }
+    });
+
+    function openCommentModal(articleId) {
+        // Ensure articleId is a number
+        const numericArticleId = articleId.replace('article-', '');
+
+        if (popupElements.commentModal) {
+            popupElements.commentModal.classList.add('active');
+            popupElements.commentArticleId.value = numericArticleId;
+            console.log(`Loading comments for article ${numericArticleId}`);
+            loadComments(numericArticleId);
+        }
+    }
+
+    function closeCommentModal() {
+        if (popupElements.commentModal) {
+            popupElements.commentModal.classList.remove('active');
+            console.log('Comment modal closed.');
+        }
+    }
+
+    async function loadComments(articleId) {
+        try {
+            const response = await fetch(`control/get-comments.php?article_id=${articleId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            console.log('Comments fetch response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const comments = await response.json();
+            console.log('Fetched comments:', comments);
+            renderComments(comments);
+        } catch (error) {
+            console.error('Failed to load comments:', error);
+            if (popupElements.commentsList) {
+                popupElements.commentsList.innerHTML = '<p>Error loading comments.</p>';
+            }
+        }
+    }
+
+    function renderComments(comments) {
+        if (popupElements.commentsList) {
+            popupElements.commentsList.innerHTML = '';
+            if (comments.length === 0) {
+                popupElements.commentsList.innerHTML = '<p>No comments yet. Be the first to comment!</p>';
+                return;
+            }
+            comments.forEach(comment => {
+                const commentElement = document.createElement('div');
+                commentElement.className = 'comment-item';
+                commentElement.innerHTML = `
+                    <p><strong>${htmlspecialchars(comment.author)}:</strong> ${htmlspecialchars(comment.comment)}</p>
+                    <small>${new Date(comment.created_at).toLocaleString()}</small>
+                `;
+                popupElements.commentsList.appendChild(commentElement);
+            });
+        }
+    }
+
+    if (popupElements.commentForm) {
+        popupElements.commentForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            console.log('Submitting comment form.');
+            try {
+                const response = await fetch('control/add-comment.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                console.log('Add comment response status:', response.status);
+                const result = await response.json();
+                console.log('Add comment response data:', result);
+                if (result.success) {
+                    this.reset();
+                    console.log('Comment submitted successfully. Reloading comments.');
+                    loadComments(formData.get('article_id'));
+                } else {
+                    alert('Error: ' + result.message);
+                    console.error('Comment submission failed:', result.message);
+                }
+            } catch (error) {
+                console.error('Failed to submit comment:', error);
+                alert('An error occurred while submitting your comment.');
+            }
+        });
+    }
+
+    if (favoritesSection) {
+        loadFavorites();
+    }
+});
+</script>
+
 </body>
 
-</html>
-
-<script>
-    
-
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('JavaScript loaded and DOM content loaded.');
-      const rotatingTextElement = document.getElementById('rotating-text');
-      console.log('rotatingTextElement:', rotatingTextElement);
-
-      const messages = [
-        {
-          en: 'Unlock the <span>Power</span> of Curated Research',
-          fr: 'Libérez la <span>puissance</span> de la recherche organisée'
-        },
-        {
-          en: 'Explore Diverse <span>Topics</span> with Expert Insights',
-          fr: 'Explorez des <span>sujets</span> variés avec des analyses d\'experts'
-        },
-        {
-          en: 'Stay Informed, <span>Stay Ahead</span>, Stay Connected',
-          fr: 'Restez informé, <span>gardez une longueur d\'avance</span>'
-        }
-      ];
-      let currentMessageIndex = 0;
-
-      function updateMessage() {
-        const lang = "<?php echo $_SESSION['language']; ?>"; // Get current language from PHP session
-        if (rotatingTextElement && messages[currentMessageIndex] && messages[currentMessageIndex][lang]) {
-          rotatingTextElement.innerHTML = messages[currentMessageIndex][lang];
-        } else {
-          console.error('Error updating message. Element or message not found.', {rotatingTextElement, currentMessageIndex, lang, messages});
-        }
-        currentMessageIndex = (currentMessageIndex + 1) % messages.length;
-      }
-
-      if (rotatingTextElement) { // Only run if the element exists
-        // Initial message display
-        updateMessage();
-
-        // Change message every 5 seconds
-        setInterval(updateMessage, 5000);
-      }
-    });
-  </script>
-  <script>
-// Consolidated and robust script for all article interactions.
-document.addEventListener('DOMContentLoaded', function() {
-
-    const articlesContainer = document.getElementById('articlesContainer');
-    const controlsContainer = document.querySelector('.article-controls');
-
-    // If the main containers don't exist, don't run any of the scripts.
-    if (!articlesContainer || !controlsContainer) {
-        return;
-    }
-
-    // 1. Initialize Advanced Search Bar
-    // Check if search bar already exists to prevent duplicates
-    if (!controlsContainer.querySelector('.search-input')) {
-        const searchInput = document.createElement('input');
-        searchInput.type = 'text';
-        searchInput.placeholder = "<?php echo $_SESSION['language'] == 'en' ? 'Search articles...' : 'Rechercher des articles...'; ?>";
-        searchInput.className = 'search-input';
-        searchInput.style.cssText = `
-            width: 300px;
-            padding: 12px 20px;
-            border: 2px solid #e9ecef;
-            border-radius: 25px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            margin-left: auto;
-        `;
-
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const articles = document.querySelectorAll('.article-card');
-            articles.forEach(article => {
-                const title = article.querySelector('.article-title').textContent.toLowerCase();
-                const excerpt = article.querySelector('.article-excerpt').textContent.toLowerCase();
-                const isVisible = title.includes(searchTerm) || excerpt.includes(searchTerm);
-                article.style.display = isVisible ? 'block' : 'none';
-            });
-        });
-        controlsContainer.appendChild(searchInput);
-    }
-
-    // 2. Initialize Filter Buttons
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const articles = document.querySelectorAll('.article-card');
-    filterButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            filterButtons.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            const filter = this.dataset.filter;
-            articles.forEach(article => {
-                const isVisible = (filter === 'all' || article.dataset.category === filter);
-                article.style.display = isVisible ? 'block' : 'none';
-            });
-        });
-    });
-
-    // 3. Initialize View Toggle Buttons
-    const viewButtons = document.querySelectorAll('.view-btn');
-    viewButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            viewButtons.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            articlesContainer.classList.toggle('list-view', this.dataset.view === 'list');
-        });
-    });
-
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize progress bars animation
-    function initProgressBars() {
-        const progressBars = document.querySelectorAll('.progress-fill');
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const progressBar = entry.target;
-                    const progress = progressBar.dataset.progress;
-                    progressBar.style.setProperty('--progress-width', progress + '%');
-                    progressBar.style.width = progress + '%';
-                }
-            });
-        }, { threshold: 0.5 });
-        
-        progressBars.forEach(bar => observer.observe(bar));
-    }
-    
-    // Feature card interactions
-    function initFeatureCards() {
-        const featureCards = document.querySelectorAll('.feature-card');
-        
-        featureCards.forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-15px) scale(1.02)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(-10px) scale(1)';
-            });
-        });
-    }
-    
-    
-    
-    // Feature action buttons
-    function initFeatureActions() {
-        const featureActionBtns = document.querySelectorAll('.feature-action-btn');
-        
-        featureActionBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const featureCard = this.closest('.feature-card');
-                const feature = featureCard.dataset.feature;
-                const title = featureCard.querySelector('.feature-title').textContent;
-                const description = featureCard.querySelector('.feature-description').textContent;
-                
-                showFeatureModal(title, description, feature);
-            });
-        });
-    }
-    
-    // Modal functions
-    function showModal(title, content) {
-        const modal = createModal(title, content);
-        document.body.appendChild(modal);
-        setTimeout(() => modal.classList.add('active'), 10);
-    }
-    
-    function showFeatureModal(title, description, feature) {
-        const additionalContent = getFeatureDetails(feature);
-        const modal = createModal(title, description + additionalContent);
-        document.body.appendChild(modal);
-        setTimeout(() => modal.classList.add('active'), 10);
-    }
-    
-    function createModal(title, content) {
-        const modal = document.createElement('div');
-        modal.className = 'custom-modal';
-        modal.innerHTML = `
-            <div class="modal-backdrop"></div>
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h3>${title}</h3>
-                    <button class="modal-close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>${content}</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="modal-btn primary">
-                        <?php echo $_SESSION['language'] == 'en' ? 'Get Started' : 'Commencer'; ?>
-                    </button>
-                    <button class="modal-btn secondary">
-                        <?php echo $_SESSION['language'] == 'en' ? 'Contact Us' : 'Nous Contacter'; ?>
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        // Modal styles
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        `;
-        
-        const backdrop = modal.querySelector('.modal-backdrop');
-        backdrop.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-        `;
-        
-        const container = modal.querySelector('.modal-container');
-        container.style.cssText = `
-            position: relative;
-            background: white;
-            border-radius: 20px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 20px 80px rgba(0,0,0,0.3);
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        `;
-        
-        const header = modal.querySelector('.modal-header');
-        header.style.cssText = `
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 25px 30px 15px;
-            border-bottom: 1px solid #e9ecef;
-        `;
-        
-        const body = modal.querySelector('.modal-body');
-        body.style.cssText = `
-            padding: 25px 30px;
-            line-height: 1.6;
-            color: #6c757d;
-        `;
-        
-        const footer = modal.querySelector('.modal-footer');
-        footer.style.cssText = `
-            padding: 15px 30px 25px;
-            display: flex;
-            gap: 15px;
-            justify-content: flex-end;
-        `;
-        
-        // Close functionality
-        const closeBtn = modal.querySelector('.modal-close');
-        const closeModal = () => {
-            modal.style.opacity = '0';
-            container.style.transform = 'scale(0.9)';
-            setTimeout(() => document.body.removeChild(modal), 300);
-        };
-        
-        closeBtn.addEventListener('click', closeModal);
-        backdrop.addEventListener('click', closeModal);
-        
-        // Active state
-        modal.classList.add = function(className) {
-            if (className === 'active') {
-                this.style.opacity = '1';
-                container.style.transform = 'scale(1)';
-            }
-        };
-        
-        return modal;
-    }
-    
-    function getFeatureDetails(feature) {
-        const details = {
-            time: `
-                <br><br><strong><?php echo $_SESSION['language'] == 'en' ? 'Time Management Benefits:' : 'Avantages de la Gestion du Temps:'; ?></strong>
-                <ul style="margin-top: 10px; padding-left: 20px;">
-                    <li><?php echo $_SESSION['language'] == 'en' ? 'Flexible class schedules' : 'Horaires de cours flexibles'; ?></li>
-                    <li><?php echo $_SESSION['language'] == 'en' ? 'Self-paced learning options' : 'Options d\'apprentissage à votre rythme'; ?></li>
-                    <li><?php echo $_SESSION['language'] == 'en' ? 'Online and offline classes' : 'Cours en ligne et hors ligne'; ?></li>
-                </ul>
-            `,
-            production: `
-                <br><br><strong><?php echo $_SESSION['language'] == 'en' ? 'Production Skills Enhancement:' : 'Amélioration des Compétences de Production:'; ?></strong>
-                <ul style="margin-top: 10px; padding-left: 20px;">
-                    <li><?php echo $_SESSION['language'] == 'en' ? 'Speaking confidence building' : 'Renforcement de la confiance en expression orale'; ?></li>
-                    <li><?php echo $_SESSION['language'] == 'en' ? 'Writing skills development' : 'Développement des compétences rédactionnelles'; ?></li>
-                    <li><?php echo $_SESSION['language'] == 'en' ? 'Creative expression exercises' : 'Exercices d\'expression créative'; ?></li>
-                </ul>
-            `,
-            management: `
-                <br><br><strong><?php echo $_SESSION['language'] == 'en' ? 'Professional Management:' : 'Gestion Professionnelle:'; ?></strong>
-                <ul style="margin-top: 10px; padding-left: 20px;">
-                    <li><?php echo $_SESSION['language'] == 'en' ? 'Progress tracking system' : 'Système de suivi des progrès'; ?></li>
-                    <li><?php echo $_SESSION['language'] == 'en' ? 'Regular performance assessments' : 'Évaluations régulières des performances'; ?></li>
-                    <li><?php echo $_SESSION['language'] == 'en' ? 'Personalized learning paths' : 'Parcours d\'apprentissage personnalisés'; ?></li>
-                </ul>
-            `
-        };
-        
-        return details[feature] || '';
-    }
-    
-    function downloadBrochure() {
-        // Simulate brochure download
-        const link = document.createElement('a');
-        link.href = '#'; // Replace with actual brochure URL
-        link.download = 'language-center-brochure.pdf';
-        
-        // Show download notification
-        showNotification('<?php echo $_SESSION['language'] == 'en' ? 'Brochure download started!' : 'Téléchargement de la brochure commencé!'; ?>');
-    }
-    
-    function showNotification(message) {
-        const notification = document.createElement('div');
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 25px;
-            z-index: 10001;
-            font-weight: 600;
-            box-shadow: 0 5px 20px rgba(46, 204, 113, 0.3);
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-        `;
-        
-        document.body.appendChild(notification);
-        setTimeout(() => notification.style.transform = 'translateX(0)', 100);
-        
-        setTimeout(() => {
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => document.body.removeChild(notification), 300);
-        }, 3000);
-    }
-    
-    // Smooth scroll for internal links
-    function initSmoothScroll() {
-        document.querySelectorAll('a[href^="#"]:not(.scroll-top)').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-    }
-    
-    // Parallax effect for floating shapes
-    function initParallax() {
-        const shapes = document.querySelectorAll('.floating-shape');
-        
-        window.addEventListener('scroll', () => {
-            const scrolled = window.pageYOffset;
-            const rate = scrolled * -0.5;
-            
-            shapes.forEach((shape, index) => {
-                const speed = (index + 1) * 0.3;
-                shape.style.transform = `translateY(${rate * speed}px) rotate(${scrolled * 0.1}deg)`;
-            });
-        });
-    }
-    
-    // Initialize all functions
-    initProgressBars();
-    initFeatureCards();
-    initFeatureActions();
-    initSmoothScroll();
-    initParallax();
-    
-    // Add loading animation for elements
-    const animatedElements = document.querySelectorAll('.feature-card, .testimonial-card, .interactive-card');
-    
-    const animationObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
-        });
-    }, { threshold: 0.1 });
-    
-    animatedElements.forEach(el => {
-        animationObserver.observe(el);
-    });
-});
-</script>
-
-<!-- Vendor JS Files -->
-<script src="app/model/dist/js/jquery.js"></script>
-<script src="model/dist/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="model/dist/vendor/aos/aos.js"></script>
-<script src="model/dist/vendor/glightbox/js/glightbox.min.js"></script>
-<script src="model/dist/vendor/purecounter/purecounter_vanilla.js"></script>
-<script src="model/dist/vendor/swiper/swiper-bundle.min.js"></script>
-<!-- <script src="assets/js/mapelmaps.js"></script> -->
-
-<!-- Template Main JS File -->
-<script src="model/dist/js/main.js"></script>
 </html>
