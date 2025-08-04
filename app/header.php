@@ -6,12 +6,14 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
     <title>Article</title>
+    <base href="/GitHubProjects/Vault/app/">
+
     <meta content="" name="description">
     <meta content="" name="keywords">
 
     <!-- Favicons -->
-    <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
-    <link href="assets/img/favicon.png" rel="icon">
+    <link href="model/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+    <link href="model/assets/img/favicon.png" rel="icon">
  
     <!-- Vendor CSS Files -->
     <link href="model/dist/vendor/bootstrap/css/bootstrap.min.css?<?php echo time(); ?>" rel="stylesheet">
@@ -26,7 +28,9 @@
     
     <!-- Main CSS File -->
     <link href="model/dist/css/main.css?<?php echo time(); ?>" rel="stylesheet">
+     
     
+
 </head>
 
 <body> 
@@ -43,7 +47,7 @@
                 <ul>
                     <li><a href="index.php"><i class="bi bi-house-door me-1"></i><?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Home' : 'Accueil'); ?></a></li>
                     <li><a href="articles.php"><i class="bi bi-newspaper me-1"></i><?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Articles' : 'Articles'); ?></a></li>
-                    <li><a href="index.phpt#about"><i class="bi bi-info-circle me-1"></i><?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'About' : 'À propos'); ?></a></li>
+                    <li><a href="index.php#about"><i class="bi bi-info-circle me-1"></i><?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'About' : 'À propos'); ?></a></li>
                     <li><a href="index.php#contact"><i class="bi bi-envelope me-1"></i><?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Contact' : 'Contact'); ?></a></li>
                     <li class="dropdown">
                         <a><i class="bi bi-translate me-1"></i><span><?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Language' : 'Langage'); ?>

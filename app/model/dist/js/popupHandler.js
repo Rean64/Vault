@@ -14,18 +14,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentArticleId = null; // To store the ID of the currently displayed article
 
-    window.openEnhancedPopup = async (articleData, lang) => {
+    enhancedPopup.addEventListener('click', async (articleData, lang) => {
         currentArticleId = articleData.id; // Store the article ID
         enhancedPopup.classList.add('active');
 
             if (articleData) {
-                popupImage.src = `assets/images/activities/${articleData.image}`;
+                popupImage.src = `app/control/assets/images/activities/${articleData.image}`;
                 popupCategory.textContent = articleData.category || 'General';
                 popupDate.textContent = new Date(articleData.date).toLocaleDateString();
                 // Calculate read time based on full content
-                popupReadTime.textContent = `${Math.ceil(articleData.descEnglish.length / 1000) * 2} min read`; 
+                const fullText = lang === 'en' ? articleData.descEnglish : articleData.descFrench;
+                popupReadTime.textContent = `${Math.ceil(fullText.length / 1000) * 2} min read`; 
                 popupTitle.textContent = lang === 'en' ? articleData.titleEnglish : articleData.titleFrench;
-                popupDescription.innerHTML = lang === 'en' ? articleData.descEnglish : articleData.descFrench;
+                popupDescription.innerHTML = fullText;
                 popupLike.textContent = articleData.likes;
 
                 popupTags.innerHTML = '';
@@ -44,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 console.error('Failed to fetch full article details.');
             }
-    };
+    });
 
     popupCloseBtn.addEventListener('click', () => {
         enhancedPopup.classList.remove('active');

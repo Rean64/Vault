@@ -1,25 +1,19 @@
 
 <?php
-// The $activities, $currentPage, and $totalPages variables are expected to be passed from the controller.
+require_once "control/config.php";
 
-// Define contact information (these are static and can remain here)
-$phoneNumber = '670844193'; // Example number
-$message = urlencode("Hello, I'm interested in your services.");
-$whatsAppLink = "https://wa.me/{$phoneNumber}?text={$message}";
-
-$lang = $_SESSION['language'] == 'en' ? 'en' : 'fr';
-
+$lang = $_SESSION['language'] ?? 'en';
+require_once "header.php";
 ?>
 
-<?php require_once "header.php"?>
 <section class="activities mt-5">
     <div class="section-header">
         <h1 class="main-title">
-            <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Latest ' : 'Derniers '); ?>
-            <span class="highlight"><?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Articles' : 'Articles'); ?></span>
+            <?php echo htmlspecialchars($lang == 'en' ? 'Latest ' : 'Derniers '); ?>
+            <span class="highlight"><?php echo htmlspecialchars($lang == 'en' ? 'Articles' : 'Articles'); ?></span>
         </h1>
         <p class="section-subtitle">
-            <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Discover our most recent activities and insights' : 'Découvrez nos activités et perspectives les plus récentes'); ?>
+            <?php echo htmlspecialchars($lang == 'en' ? 'Discover our most recent activities and insights' : 'Découvrez nos activités et perspectives les plus récentes'); ?>
         </p>
     </div>
 
@@ -27,219 +21,61 @@ $lang = $_SESSION['language'] == 'en' ? 'en' : 'fr';
         <!-- Filter and Sort Options -->
         <div class="article-controls">
             <div class="filter-tabs">
-                <button class="filter-btn active" data-filter="all">
-                    <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'All' : 'Tous'); ?>
-                </button>
-                <button class="filter-btn" data-filter="recent">
-                    <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Recent' : 'Récents'); ?>
-                </button>
-                <button class="filter-btn" data-filter="popular">
-                    <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Popular' : 'Populaires'); ?>
-                </button>
+                <button class="filter-btn active" data-filter="all"><?php echo htmlspecialchars($lang == 'en' ? 'All' : 'Tous'); ?></button>
+                <button class="filter-btn" data-filter="recent"><?php echo htmlspecialchars($lang == 'en' ? 'Recent' : 'Récents'); ?></button>
+                <button class="filter-btn" data-filter="popular"><?php echo htmlspecialchars($lang == 'en' ? 'Popular' : 'Populaires'); ?></button>
             </div>
             <div class="view-options">
-                <button class="view-btn active" data-view="grid" title="Grid View">
-                    <i class="fas fa-th"></i>
-                </button>
-                <button class="view-btn" data-view="list" title="List View">
-                    <i class="fas fa-list"></i>
-                </button>
+                <button class="view-btn active" data-view="grid" title="Grid View"><i class="fas fa-th"></i></button>
+                <button class="view-btn" data-view="list" title="List View"><i class="fas fa-list"></i></button>
             </div>
         </div>
 
         <div class="articles-grid" id="articlesContainer">
-            <?php
-            $lang = $_SESSION['language'] == 'en' ? 'en' : 'fr';
-            
-            foreach (($activities ?? []) as $data) {
-                $jsonData = json_encode($data);
-                $readTime = rand(3, 8); // Simulate read time
-                $category = $data['category'] ?? 'General';
-                $publishDate = $data['date'] ?? date('Y-m-d');
-                $viewCount = $data['views'] ?? rand(100, 1000);
-            ?>
-            
-            <article class="article-card" data-category="<?php echo strtolower($category); ?>" data-id="<?php echo $data['id']; ?>">
-                <div class="article-image">
-                    <img src="assets/images/activities/<?php echo htmlspecialchars($data['image']); ?>" 
-                         alt="<?php echo htmlspecialchars($_SESSION['language'] == 'en' ? $data['titleEnglish'] : $data['titleFrench']); ?>"
-                         loading="lazy">
-                    <div class="article-overlay">
-                        <div class="article-category"><?php echo htmlspecialchars($category); ?></div>
-                        <div class="article-actions">
-                            <button class="action-btn bookmark-btn" title="<?php echo $_SESSION['language'] == 'en' ? 'Bookmark' : 'Marquer'; ?>">
-                                <i class="far fa-bookmark"></i>
-                            </button>
-                            <button class="action-btn share-btn" title="<?php echo $_SESSION['language'] == 'en' ? 'Share' : 'Partager'; ?>">
-                                <i class="fas fa-share-alt"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="article-content">
-                    <div class="article-meta">
-                        <span class="meta-item">
-                            <i class="far fa-clock"></i>
-                            <?php echo $readTime . ($_SESSION['language'] == 'en' ? ' min read' : ' min de lecture'); ?>
-                        </span>
-                        <span class="meta-item">
-                            <i class="far fa-eye"></i>
-                            <?php echo number_format($viewCount) . ($_SESSION['language'] == 'en' ? ' views' : ' vues'); ?>
-                        </span>
-                        <span class="meta-item">
-                            <i class="far fa-calendar"></i>
-                            <?php echo date('M d, Y', strtotime($publishDate)); ?>
-                        </span>
-                    </div>
-
-                    <h3 class="article-title">
-                        <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? $data['titleEnglish'] : $data['titleFrench']); ?>
-                    </h3>
-
-                    <p class="article-excerpt">
-                        <?php 
-                        $description = $_SESSION['language'] == 'en' ? $data['descEnglish'] : $data['descFrench'];
-                        echo htmlspecialchars(strlen($description) > 120 ? substr($description, 0, 120) . '...' : $description); 
-                        ?>
-                    </p>
-
-                    <div class="article-footer">
-                        <div class="article-tags">
-                            <?php 
-                            $tags = $data['tags'] ?? [];
-                            if (is_string($tags)) { // Fallback for old data or if not processed by controller
-                                $tags = array_map('trim', explode(',', $tags));
-                            }
-                            foreach (array_slice($tags, 0, 2) as $tag): 
-                                if (!empty($tag)): // Only display non-empty tags
-                            ?>
-                            <span class="tag">#<?php echo htmlspecialchars($tag); ?></span>
-                            <?php 
-                                endif;
-                            endforeach; 
-                            ?>
-                        </div>
-                        
-                        <div class="article-cta">
-                            <button class="read-more-btn" data-article='<?php echo json_encode($data); ?>' data-lang="<?php echo $lang; ?>" data-id="<?php echo $data['id']; ?>">
-                                <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Read More' : 'Lire Plus'); ?>
-                                <i class="fas fa-arrow-right"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Engagement Bar -->
-                    <div class="engagement-bar">
-                        <button class="engagement-btn like-btn" data-count="<?php echo rand(10, 100); ?>">
-                            <i class="far fa-heart"></i>
-                            <span class="count"><?php echo rand(10, 100); ?></span>
-                        </button>
-                        <button class="engagement-btn comment-btn" data-count="<?php echo rand(5, 50); ?>">
-                            <i class="far fa-comment"></i>
-                            <span class="count"><?php echo rand(5, 50); ?></span>
-                        </button>
-                    </div>
-                </div>
-            </article>
-
-            <?php
-            }
-            ?>
+            <!-- Articles will be loaded here by JavaScript -->
+            <div class="loading-spinner"></div>
         </div>
 
-        <!-- Pagination Controls -->
-        <div class="pagination-controls text-center mt-5">
-            <?php if ($currentPage > 1): ?>
-                <a href="?page=<?php echo $currentPage - 1; ?>" class="btn btn-primary"><?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Previous' : 'Précédent'); ?></a>
-            <?php endif; ?>
-
-            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                <a href="?page=<?php echo $i; ?>" class="btn <?php echo ($i == $currentPage) ? 'btn-primary' : 'btn-outline-primary'; ?> mx-1"><?php echo $i; ?></a>
-            <?php endfor; ?>
-
-            <?php if ($currentPage < $totalPages): ?>
-                <a href="?page=<?php echo $currentPage + 1; ?>" class="btn btn-primary"><?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Next' : 'Suivant'); ?></a>
-            <?php endif; ?>
-        </div>
-
-    </div> 
-
-    <!-- Enhanced Popup Modal -->
-    <div id="enhancedPopup" class="enhanced-popup">
-        <div class="popup-backdrop"></div>
-        <div class="popup-container">
-            <div class="popup-header">
-                <button class="popup-close-btn">
-                    <i class="fas fa-times"></i>
-                </button>
-                <div class="popup-actions">
-                    <button class="popup-action-btn" id="popupBookmark">
-                        <i class="far fa-bookmark"></i>
-                    </button>
-                    <button class="popup-action-btn" id="popupShare">
-                        <i class="fas fa-share-alt"></i>
-                    </button>
-                    <button class="popup-action-btn" id="popupPrint">
-                        <i class="fas fa-print"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="popup-body">
-                <div class="popup-image-section">
-                    <img id="popupImage" src="" alt="" class="popup-main-image">
-                    <div class="popup-image-overlay">
-                        <div class="popup-category" id="popupCategory"></div>
-                    </div>
-                </div>
-
-                <div class="popup-content-section">
-                    <div class="popup-meta">
-                        <span id="popupDate"></span>
-                        <span id="popupReadTime"></span>
-                    </div>
-                    
-                    <h1 id="popupTitle" class="popup-main-title"></h1>
-                    
-                    <div class="popup-engagement">
-                        <button class="popup-engage-btn" id="popupLike">
-                            <i class="far fa-heart"></i>
-                            <spann id="popupLikes">0</spann>
-                        </button>
-                        <button class="popup-engage-btn" id="popupComment">
-                            <i class="far fa-comment"></i>
-                            <span>0</span>
-                        </button>
-                    </div>
-
-                    <div id="popupDescription" class="popup-main-content"></div>
-                    
-                    <div class="popup-tags" id="popupTags"></div>
-                    
-                    <div class="popup-footer-actions">
-                        <button class="popup-cta-btn primary">
-                            <?php echo $_SESSION['language'] == 'en' ? 'Learn More' : 'En Savoir Plus'; ?>
-                        </button>
-                        <button class="popup-cta-btn secondary" id="openCommentsBtn">
-                            <?php echo $_SESSION['language'] == 'en' ? 'Comments' : 'Commentaires'; ?>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Navigation to All Articles -->
-    <div class="section-footer">
-        <a href="activities" class="view-all-btn">
-            <span><?php echo $_SESSION['language'] == 'en' ? 'View All Articles' : 'Voir Tous les Articles'; ?></span>
-            <i class="fas fa-arrow-right"></i>
-        </a>
+        <!-- Pagination Controls will be generated by JavaScript -->
+        <div class="pagination-controls text-center mt-5" id="paginationControls"></div>
     </div>
 </section>
 
- <?php require_once "$footer"?>
+<!-- Enhanced Popup Modal -->
+<div id="enhancedPopup" class="enhanced-popup">
+    <div class="popup-backdrop"></div>
+    <div class="popup-container">
+        <div class="popup-header">
+            <button class="popup-close-btn"><i class="fas fa-times"></i></button>
+            <div class="popup-actions">
+                <button class="popup-action-btn" id="popupBookmark"><i class="far fa-bookmark"></i></button>
+                <button class="popup-action-btn" id="popupShare"><i class="fas fa-share-alt"></i></button>
+                <button class="popup-action-btn" id="popupPrint"><i class="fas fa-print"></i></button>
+            </div>
+        </div>
+        <div class="popup-body">
+            <div class="popup-image-section">
+                <img id="popupImage" src="" alt="" class="popup-main-image">
+                <div class="popup-image-overlay">
+                    <div class="popup-category" id="popupCategory"></div>
+                </div>
+            </div>
+            <div class="popup-content-section">
+                <div class="popup-meta">
+                    <span id="popupDate"></span>
+                    <span id="popupReadTime"></span>
+                </div>
+                <h1 id="popupTitle" class="popup-main-title"></h1>
+                <div class="popup-engagement">
+                    <button class="popup-engage-btn" id="popupLike"><i class="far fa-heart"></i> <span id="popupLikes">0</span></button>
+                    <button class="popup-engage-btn" id="popupCommentBtn"><i class="far fa-comment"></i> <span id="popupCommentCount">0</span></button>
+                </div>
+                <div id="popupDescription" class="popup-main-content"></div>
+                <div class="popup-tags" id="popupTags"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Comment Modal -->
 <div id="commentModal" class="enhanced-popup">
@@ -247,9 +83,7 @@ $lang = $_SESSION['language'] == 'en' ? 'en' : 'fr';
     <div class="popup-container">
         <div class="popup-header">
             <h3 class="modal-title">Comments</h3>
-            <button class="popup-close-btn" id="commentModalClose">
-                <i class="fas fa-times"></i>
-            </button>
+            <button class="popup-close-btn" id="commentModalClose"><i class="fas fa-times"></i></button>
         </div>
         <div class="popup-body">
             <div class="comments-section">
@@ -257,25 +91,148 @@ $lang = $_SESSION['language'] == 'en' ? 'en' : 'fr';
                 <form id="commentForm" class="comment-form">
                     <input type="hidden" id="commentArticleId" name="article_id">
                     <input type="hidden" id="commentParentId" name="parent_id" value="0">
-                    <div class="form-group mb-3">
-                        <input type="text" class="form-control" id="commentAuthor" name="author" placeholder="Your Name" required>
-                    </div>
-                    <div class="form-group mb-3">
-                        <textarea class="form-control" id="commentText" name="comment" rows="3" placeholder="Your Comment" required></textarea>
-                    </div>
+                    <div class="form-group mb-3"><input type="text" class="form-control" id="commentAuthor" name="author" placeholder="Your Name" required></div>
+                    <div class="form-group mb-3"><textarea class="form-control" id="commentText" name="comment" rows="3" placeholder="Your Comment" required></textarea></div>
                     <button type="submit" class="btn btn-primary">Submit Comment</button>
                 </form>
-
                 <h4 class="mt-4">All Comments</h4>
-                <div id="commentsList" class="comments-list">
-                    <!-- Comments will be loaded here dynamically -->
-                </div>
+                <div id="commentsList" class="comments-list"></div>
             </div>
         </div>
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const articlesContainer = document.getElementById('articlesContainer');
+    const paginationControls = document.getElementById('paginationControls');
+    const lang = '<?php echo $lang; ?>';
 
-  <script src="assets/js/popupHandler.js"></script>
-  <script src="assets/js/commentHandler.js"></script>
- <?php require_once "footer.php"?>
+    const renderArticles = (articles) => {
+        articlesContainer.innerHTML = '';
+        if (!articles || articles.length === 0) {
+            articlesContainer.innerHTML = '<div class="no-articles"><?php echo htmlspecialchars($lang == 'en' ? 'No articles found.' : 'Aucun article trouvé.'); ?></div>';
+            return;
+        }
+
+        articles.forEach(article => {
+            const title = lang === 'en' ? article.titleEnglish : article.titleFrench;
+            const description = lang === 'en' ? article.descEnglish : article.descFrench;
+            const strippedDescription = description.replace(/<[^>]+>/g, '');
+            const truncatedDescription = strippedDescription.length > 120 ? strippedDescription.substring(0, 120) + '...' : strippedDescription;
+            const readTime = Math.ceil(strippedDescription.length / 200) || 3;
+            const viewCount = parseInt(article.views || 0).toLocaleString();
+            const publishDate = new Date(article.created_at).toLocaleDateString(lang === 'en' ? 'en-US' : 'fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
+            const tags = article.tags ? article.tags.split(',').slice(0, 2).map(tag => `#${tag.trim()}`).join(' ') : '';
+            const likeCount = article.likes || 0;
+            const commentCount = article.comment || 0;
+
+            const articleCard = `
+                <article class="article-card" data-category="${htmlspecialchars(article.category || 'general')}" data-id="article-${htmlspecialchars(article.id)}">
+                    <div class="article-image">
+                        <img src="../model/assets/images/activities/${htmlspecialchars(article.image || 'default.jpg')}" alt="${htmlspecialchars(title)}" loading="lazy">
+                        <div class="article-overlay">
+                            <div class="article-category">${htmlspecialchars(article.category || 'General')}</div>
+                        </div>
+                    </div>
+                    <div class="article-content">
+                        <div class="article-meta">
+                            <span class="meta-item"><i class="far fa-clock"></i> ${readTime} ${lang === 'en' ? 'min read' : 'min de lecture'}</span>
+                            <span class="meta-item"><i class="far fa-eye"></i> ${viewCount} ${lang === 'en' ? 'views' : 'vues'}</span>
+                        </div>
+                        <h3 class="article-title">${htmlspecialchars(title)}</h3>
+                        <p class="article-excerpt">${htmlspecialchars(truncatedDescription)}</p>
+                        <div class="article-footer">
+                            <div class="article-tags">${htmlspecialchars(tags)}</div>
+                            <div class="article-cta">
+                                <button class="read-more-btn" data-article='${JSON.stringify(article)}' data-lang="${lang}" data-id="${htmlspecialchars(article.id)}">
+                                    ${lang === 'en' ? 'Read More' : 'Lire Plus'} <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </article>`;
+            articlesContainer.insertAdjacentHTML('beforeend', articleCard);
+        });
+    };
+
+    const renderPagination = (currentPage, totalPages) => {
+        paginationControls.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        let paginationHTML = '';
+        if (currentPage > 1) {
+            paginationHTML += `<a href="#" class="btn btn-primary" data-page="${currentPage - 1}">${htmlspecialchars(lang === 'en' ? 'Previous' : 'Précédent')}</a>`;
+        }
+
+        for (let i = 1; i <= totalPages; i++) {
+            paginationHTML += `<a href="#" class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" data-page="${i}">${i}</a>`;
+        }
+
+        if (currentPage < totalPages) {
+            paginationHTML += `<a href="#" class="btn btn-primary" data-page="${currentPage + 1}">${htmlspecialchars(lang === 'en' ? 'Next' : 'Suivant')}</a>`;
+        }
+        
+        paginationControls.innerHTML = paginationHTML;
+    };
+
+    let isLoading = false;
+    const loadArticles = async (page = 1) => {
+        if (isLoading) return;
+        isLoading = true;
+        articlesContainer.innerHTML = '<div class="loading-spinner"></div>';
+        paginationControls.innerHTML = '';
+
+        // Scroll to the top of the articles container
+        articlesContainer.scrollIntoView({ behavior: 'smooth' });
+
+        try {
+            const response = await fetch(`control/get-paginated-articles.php?page=${page}`);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+            }
+
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(`Server error: ${data.message}`);
+            }
+
+            renderArticles(data.articles);
+            renderPagination(data.currentPage, data.totalPages);
+
+        } catch (error) {
+            console.error('Failed to load articles:', error);
+            articlesContainer.innerHTML = `<div class="no-articles error"><strong>Error:</strong> ${error.message}</div>`;
+        } finally {
+            isLoading = false;
+        }
+    };
+
+    paginationControls.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = e.target.closest('a');
+        if (target && target.dataset.page) {
+            const page = parseInt(target.dataset.page);
+            loadArticles(page);
+        }
+    });
+
+    function htmlspecialchars(str) {
+        if (typeof str !== 'string') {
+            return '';
+        }
+        const map = {
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+        };
+        return str.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Initial Load
+    loadArticles(1);
+});
+</script>
+
+<?php require_once "footer.php"; ?>

@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         const formData = new FormData(commentForm);
-        const response = await fetch('/addComment', {
+        const response = await fetch('control/addComment.php', {
             method: 'POST',
             body: formData
         });
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function fetchComments(articleId) {
-        const response = await fetch(`/getComments?article_id=${articleId}`);
+        const response = await fetch(`control/getComments.php?article_id=${articleId}`);
         const comments = await response.json();
         commentsList.innerHTML = '';
         comments.forEach(comment => {

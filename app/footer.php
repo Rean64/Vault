@@ -127,63 +127,19 @@
 
 <div id="preloader"></div>
 
-<script>
-function openPopUp(data, lang) {
-// Assuming 'data' is the object passed from PHP
-const popup = document.getElementById('popup');
+<!-- Vendor JS Files -->
+<script src="model/dist/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="model/dist/vendor/aos/aos.js"></script>
+<script src="model/dist/vendor/glightbox/js/glightbox.min.js"></script>
+<script src="model/dist/vendor/purecounter/purecounter_vanilla.js"></script>
+<script src="model/dist/vendor/swiper/swiper-bundle.min.js"></script>
 
-// Setting image source
-const img = popup.querySelector('.popup-img');
-img.src = `assets/images/activities/${data.image}`;
-img.alt = data.titleEnglish; // Or titleFrench, depending on the session language
+<!-- Template Main JS File -->
+<script src="model/dist/js/main.js"></script>
 
-// Setting title
-const title = popup.querySelector('.popup-right .right-content h1');
-title.textContent = lang == 'en' ? data.titleEnglish : data.titleFrench; // Or titleFrench
+</body>
 
-// Setting description
-const desc = popup.querySelector('.popup-right .right-content p');
-desc.textContent = lang == 'en' ? data.descEnglish : data.descFrench; // Or descFrench
-
-// Show the popup
-popup.classList.remove("hide-popup");
-popup.classList.add("show-popup");
-}
-
-
-window.addEventListener("load", () => {
-const sentMsg = document.getElementById('sentMsg');
-const errorMsg = document.getElementById('errorMsg');
-
-if (sentMsg) {
-    let sent = sentMsg.getAttribute('style');
-    setTimeout(() => {
-        sentMsg.style.display = 'none';
-    }, 5000);
-}
-
-if (errorMsg) {
-    setTimeout(() => {
-        errorMsg.style.display = 'none';
-    }, 5000);
-}
-});
-
-// Popup
-// const popup = document.querySelector(".popup");
-// const action = document.querySelector(".action");
-// const closePopup = document.querySelector(".popup-close");
-
-// if (popup) {
-//   closePopup.addEventListener("click", () => {
-//     popup.classList.add("hide-popup");
-//   });
-
-//   action.addEventListener("click", () => {
-//     popup.classList.remove("hide-popup");
-//   });
-// }
-</script>
+</html>
 
 <script>
     
@@ -600,7 +556,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <!-- Vendor JS Files -->
-<script src="model/dist/js/jquery.js"></script>
+<script src="app/model/dist/js/jquery.js"></script>
 <script src="model/dist/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="model/dist/vendor/aos/aos.js"></script>
 <script src="model/dist/vendor/glightbox/js/glightbox.min.js"></script>
@@ -610,5 +566,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Template Main JS File -->
 <script src="model/dist/js/main.js"></script>
+<script src="model/dist/js/popupHandler.js"></script>
+<script src="model/dist/js/commentHandler.js"></script>
 
-</html>
+
+
+  </html>

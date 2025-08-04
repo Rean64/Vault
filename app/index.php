@@ -1,8 +1,8 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 // session_start();
+ini_set('display_errors', 0);
+error_reporting(0);
+
 // Language : fr $ en
 if (!isset($_SESSION['language'])) {
   $_SESSION['language'] = "fr";
@@ -32,7 +32,7 @@ $whatsAppLink = "https://wa.me/{$phoneNumber}?text={$message}";
 
 
 ?>
-<?= require_once "header.php";?>
+<?php require_once "header.php";?>
 
   <!-- ======= Hero Section ======= -->
  <section id="hero" class="hero d-flex align-items-center section-bg">
@@ -369,112 +369,78 @@ $whatsAppLink = "https://wa.me/{$phoneNumber}?text={$message}";
         </div>
 
         <div class="articles-grid" id="articlesContainer">
-            <?php
-            $count = 0;
-            $lang = $_SESSION['language'] == 'en' ? 'en' : 'fr';
-            
-            foreach (($activities ?? []) as $data) {
-                if ($count >= 6) break; // Show more articles initially
-
-                $jsonData = json_encode($data);
-                $articleId = 'article-' . $count;
-                $readTime = rand(3, 8); // Simulate read time
-                $category = $data['category'] ?? 'General';
-                $publishDate = $data['date'] ?? date('Y-m-d');
-                $viewCount = $data['views'] ?? rand(100, 1000);
+    <?php
+    include_once 'control/config.php';
+    $sql = "SELECT id, titleEnglish, titleFrench, descEnglish, descFrench, category, image, created_at, tags, status, views, likes, comment FROM Posts WHERE status = 'PUBLISHED' ORDER BY created_at DESC LIMIT 6";
+    $result = mysqli_query($conn, $sql);
+    $lang = $_SESSION['language'] ?? 'en';
+    
+    if ($result && mysqli_num_rows($result) > 0) {
+        while ($article = mysqli_fetch_assoc($result)) {
+            $title = $lang === 'en' ? $article['titleEnglish'] : $article['titleFrench'];
+            $description = $lang === 'en' ? $article['descEnglish'] : $article['descFrench'];
+            $strippedDescription = strip_tags($description);
+            $truncatedDescription = strlen($strippedDescription) > 120 ? substr($strippedDescription, 0, 120) . '...' : $strippedDescription;
+            $readTime = ceil(strlen($strippedDescription) / 200) ?: 3;
+            $viewCount = (int)($article['views'] ?? 0);
+            $publishDate = date_format(date_create($article['created_at']), $lang === 'en' ? 'M d, Y' : 'd M Y');
+            $tags = $article['tags'] ? implode(' ', array_map(fn($tag) => '#' . trim($tag), array_slice(explode(',', $article['tags']), 0, 2))) : '';
+            $likeCount = (int)($article['likes'] ?? 0);
+            $commentCount = (int)($article['comment'] ?? 0);
             ?>
-            
-            <article class="article-card" data-category="<?php echo strtolower($category); ?>" data-id="<?php echo $articleId; ?>">
+            <article class="article-card" data-category="<?php echo htmlspecialchars(strtolower($article['category'] ?? 'general')); ?>" data-id="article-<?php echo htmlspecialchars($article['id']); ?>">
                 <div class="article-image">
-                    <img src="model/assets/images/activities/<?php echo htmlspecialchars($data['image']); ?>" 
-                         alt="<?php echo htmlspecialchars($_SESSION['language'] == 'en' ? $data['titleEnglish'] : $data['titleFrench']); ?>"
-                         loading="lazy">
+                    <img src="model/assets/images/activities/<?php echo htmlspecialchars($article['image'] ?? 'default.jpg'); ?>" alt="<?php echo htmlspecialchars($title); ?>" loading="lazy">
                     <div class="article-overlay">
-                        <div class="article-category"><?php echo htmlspecialchars($category); ?></div>
+                        <div class="article-category"><?php echo htmlspecialchars($article['category'] ?? 'General'); ?></div>
                         <div class="article-actions">
-                            <button class="action-btn bookmark-btn" title="<?php echo $_SESSION['language'] == 'en' ? 'Bookmark' : 'Marquer'; ?>">
+                            <button class="action-btn bookmark-btn" title="<?php echo $lang === 'en' ? 'Bookmark' : 'Marquer'; ?>">
                                 <i class="far fa-bookmark"></i>
                             </button>
-                            <button class="action-btn share-btn" title="<?php echo $_SESSION['language'] == 'en' ? 'Share' : 'Partager'; ?>">
+                            <button class="action-btn share-btn" title="<?php echo $lang === 'en' ? 'Share' : 'Partager'; ?>">
                                 <i class="fas fa-share-alt"></i>
                             </button>
                         </div>
                     </div>
                 </div>
-
                 <div class="article-content">
                     <div class="article-meta">
-                        <span class="meta-item">
-                            <i class="far fa-clock"></i>
-                            <?php echo $readTime . ($_SESSION['language'] == 'en' ? ' min read' : ' min de lecture'); ?>
-                        </span>
-                        <span class="meta-item">
-                            <i class="far fa-eye"></i>
-                            <?php echo number_format($viewCount) . ($_SESSION['language'] == 'en' ? ' views' : ' vues'); ?>
-                        </span>
-                        <span class="meta-item">
-                            <i class="far fa-calendar"></i>
-                            <?php echo date('M d, Y', strtotime($publishDate)); ?>
-                        </span>
+                        <span class="meta-item"><i class="far fa-clock"></i> <?php echo $readTime; ?> <?php echo $lang === 'en' ? 'min read' : 'min de lecture'; ?></span>
+                        <span class="meta-item"><i class="far fa-eye"></i> <?php echo number_format($viewCount); ?> <?php echo $lang === 'en' ? 'views' : 'vues'; ?></span>
+                        <span class="meta-item"><i class="far fa-calendar"></i> <?php echo htmlspecialchars($publishDate); ?></span>
                     </div>
-
-                    <h3 class="article-title">
-                        <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? $data['titleEnglish'] : $data['titleFrench']); ?>
-                    </h3>
-
-                    <p class="article-excerpt">
-                        <?php 
-                        $description = $_SESSION['language'] == 'en' ? $data['descEnglish'] : $data['descFrench'];
-                        echo htmlspecialchars(strlen($description) > 120 ? substr($description, 0, 120) . '...' : $description); 
-                        ?>
-                    </p>
-
+                    <h3 class="article-title"><?php echo htmlspecialchars($title); ?></h3>
+                    <p class="article-excerpt"><?php echo htmlspecialchars($truncatedDescription); ?></p>
                     <div class="article-footer">
-                        <div class="article-tags">
-                            <?php 
-                            $tags = $data['tags'] ?? [];
-                            if (is_string($tags)) { // Fallback for old data or if not processed by controller
-                                $tags = array_map('trim', explode(',', $tags));
-                            }
-                            foreach (array_slice($tags, 0, 2) as $tag): 
-                                if (!empty($tag)): // Only display non-empty tags
-                            ?>
-                            <span class="tag">#<?php echo htmlspecialchars($tag); ?></span>
-                            <?php 
-                                endif;
-                            endforeach; 
-                            ?>
-                        </div>
-                        
+                        <div class="article-tags"><?php echo htmlspecialchars($tags); ?></div>
                         <div class="article-cta">
-                            <button class="read-more-btn" data-article='<?php echo htmlspecialchars(json_encode($data), ENT_QUOTES, 'UTF-8'); ?>' data-lang="<?php echo htmlspecialchars($lang); ?>" data-id="<?php echo htmlspecialchars($data['id']); ?>">
-                                <?php echo htmlspecialchars($_SESSION['language'] == 'en' ? 'Read More' : 'Lire Plus'); ?>
-                                <i class="fas fa-arrow-right"></i>
+                            <button class="read-more-btn" data-article='<?php echo json_encode($article); ?>' data-lang="<?php echo $lang; ?>" data-id="<?php echo htmlspecialchars($article['id']); ?>">
+                                <?php echo $lang === 'en' ? 'Read More' : 'Lire Plus'; ?> <i class="fas fa-arrow-right"></i>
                             </button>
                         </div>
                     </div>
-
-                    <!-- Engagement Bar -->
                     <div class="engagement-bar">
-                        <button class="engagement-btn like-btn" data-count="<?php echo rand(10, 100); ?>">
-                            <i class="far fa-heart"></i>
-                            <span class="count"><?php echo rand(10, 100); ?></span>
+                        <button class="engagement-btn like-btn" data-count="<?php echo $likeCount; ?>">
+                            <i class="far fa-heart"></i> <span class="count"><?php echo $likeCount; ?></span>
                         </button>
-                        <button class="engagement-btn comment-btn" data-count="<?php echo rand(5, 50); ?>">
-                            <i class="far fa-comment"></i>
-                            <span class="count"><?php echo rand(5, 50); ?></span>
+                        <button class="engagement-btn comment-btn" data-count="<?php echo $commentCount; ?>">
+                            <i class="far fa-comment"></i> <span class="count"><?php echo $commentCount; ?></span>
                         </button>
                     </div>
                 </div>
             </article>
-
             <?php
-                $count++;
-            }
-            ?>
-        </div>
+        }
+        mysqli_close($conn);
+    } else {
+        echo '<div class="no-articles">' . htmlspecialchars($lang === 'en' ? 'No articles found.' : 'Aucun article trouvé.') . '</div>';
+    }
+    ?>
+</div>
 
     </div>
+
+    
 
     <!-- Enhanced Popup Modal -->
     <div id="enhancedPopup" class="enhanced-popup">
@@ -543,7 +509,7 @@ $whatsAppLink = "https://wa.me/{$phoneNumber}?text={$message}";
 
     <!-- Navigation to All Articles -->
     <div class="section-footer">
-        <a href="activities" class="view-all-btn">
+        <a href="articles.php" class="view-all-btn">
             <span><?php echo $_SESSION['language'] == 'en' ? 'View All Articles' : 'Voir Tous les Articles'; ?></span>
             <i class="fas fa-arrow-right"></i>
         </a>
@@ -765,7 +731,8 @@ $whatsAppLink = "https://wa.me/{$phoneNumber}?text={$message}";
                 <p>Awae Escalier, Yaounde, Cameroon</p>"
                   :
                   "  <h3>Notre Address</h3>
-                <p>Awae Escalier, Yaounde, Cameroun</p>" ?>
+                <p>Awae Escalier, Yaounde, Cameroun</p>"
+                ?>
 
               </div>
             </div>
@@ -1056,7 +1023,5 @@ $whatsAppLink = "https://wa.me/{$phoneNumber}?text={$message}";
 </div>
 
 
-  <script src="model/assets/js/counter.js"></script>
-  <script src="model/assets/js/popupHandler.js"></script>
-  <script src="model/assets/js/commentHandler.js"></script>
   <?php require_once "footer.php";?>
+
