@@ -48,7 +48,7 @@ $whatsAppLink = "https://wa.me/{$phoneNumber}?text={$message}";
               }
             ?>
           </h2>
-          <p data-aos="fade-up" data-aos-delay="100">
+          <p data-aos="fade-up" data-aos-delay="100" style="font-weight: 300">
             <?php echo htmlspecialchars(
               $_SESSION['language'] == 'en'
                 ? 'Discover curated knowledge on science, technology, culture, politics, environment, education, and more. MindVault delivers reliable research and thought-provoking perspectives to fuel your curiosity.'
@@ -456,9 +456,6 @@ $whatsAppLink = "https://wa.me/{$phoneNumber}?text={$message}";
                     </button>
                     <button class="popup-action-btn" id="popupShare">
                         <i class="fas fa-share-alt"></i>
-                    </button>
-                    <button class="popup-action-btn" id="popupPrint">
-                        <i class="fas fa-print"></i>
                     </button>
                 </div>
             </div>
@@ -1024,4 +1021,204 @@ $whatsAppLink = "https://wa.me/{$phoneNumber}?text={$message}";
 
 
   <?php require_once "footer.php";?>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const rotatingTexts = [
+      "Unlock the <span>Power</span> of Curated Research",
+      "Explore <span>Insights</span> from Leading Experts",
+      "Fuel Your <span>Curiosity</span> with In-Depth Articles"
+    ];
+
+    const rotatingTextsFr = [
+      "Libérez la <span>puissance</span> de la recherche organisée",
+      "Découvrez les <span>perspectives</span> des meilleurs experts",
+      "Nourrissez votre <span>curiosité</span> avec des articles approfondis"
+    ];
+
+    const rotatingTextElement = document.getElementById('rotating-text');
+    const currentLang = '<?php echo $_SESSION['language']; ?>';
+    const texts = currentLang === 'en' ? rotatingTexts : rotatingTextsFr;
+    let currentIndex = 0;
+
+    function updateRotatingText() {
+      // Add fade-out animation
+      rotatingTextElement.style.opacity = 0;
+
+      setTimeout(() => {
+        // Update text and add fade-in animation
+        currentIndex = (currentIndex + 1) % texts.length;
+        rotatingTextElement.innerHTML = texts[currentIndex];
+        rotatingTextElement.style.opacity = 1;
+      }, 500); // Match this with CSS transition duration
+    }
+
+    // Set initial text
+    rotatingTextElement.innerHTML = texts[0];
+
+    // Change text every 5 seconds
+    setInterval(updateRotatingText, 5000);
+  });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const readMoreButtons = document.querySelectorAll('.read-more-btn');
+    const popup = document.getElementById('enhancedPopup');
+    const popupBackdrop = popup.querySelector('.popup-backdrop');
+    const closeBtn = popup.querySelector('.popup-close-btn');
+    const lang = '<?php echo $_SESSION['language']; ?>';
+
+    const popupElements = {
+        image: document.getElementById('popupImage'),
+        category: document.getElementById('popupCategory'),
+        date: document.getElementById('popupDate'),
+        readTime: document.getElementById('popupReadTime'),
+        title: document.getElementById('popupTitle'),
+        likes: document.getElementById('popupLikes'),
+        description: document.getElementById('popupDescription'),
+        tags: document.getElementById('popupTags'),
+        printBtn: document.getElementById('popupPrint'),
+        likeBtn: document.getElementById('popupLike'),
+        commentBtn: document.getElementById('popupComment'),
+        openCommentsBtn: document.getElementById('openCommentsBtn'),
+        commentModal: document.getElementById('commentModal'),
+        commentModalClose: document.getElementById('commentModalClose'),
+        commentForm: document.getElementById('commentForm'),
+        commentsList: document.getElementById('commentsList'),
+        commentArticleId: document.getElementById('commentArticleId')
+    };
+
+    function openPopup(articleData) {
+        const article = JSON.parse(articleData);
+        console.log('Opening popup for article:', article);
+        const title = lang === 'en' ? article.titleEnglish : article.titleFrench;
+        const description = lang === 'en' ? article.descEnglish : article.descFrench;
+        const strippedDescription = description.replace(/<[^>]+>/g, '');
+        const readTime = Math.ceil(strippedDescription.length / 200) || 3;
+        const publishDate = new Date(article.created_at).toLocaleDateString(lang === 'en' ? 'en-US' : 'fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
+        const tagsHTML = article.tags ? article.tags.split(',').map(tag => `<span class="tag-item">#${tag.trim()}</span>`).join('') : '';
+
+        popupElements.image.src = `model/assets/images/activities/${article.image || 'default.jpg'}`;
+        popupElements.category.textContent = article.category || 'General';
+        popupElements.date.textContent = publishDate;
+        popupElements.readTime.textContent = `${readTime} ${lang === 'en' ? 'min read' : 'min de lecture'}`;
+        popupElements.title.innerHTML = title;
+        popupElements.likes.textContent = article.likes || 0;
+        popupElements.description.innerHTML = description;
+        popupElements.tags.innerHTML = tagsHTML;
+
+        popup.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Setup event listeners for popup actions
+        popupElements.printBtn.onclick = () => window.print();
+        popupElements.likeBtn.onclick = () => console.log('Liked article:', article.id);
+        
+        // Handle comments
+        if (popupElements.commentArticleId) {
+            popupElements.commentArticleId.value = article.id;
+        }
+        if (popupElements.openCommentsBtn) {
+            popupElements.openCommentsBtn.onclick = () => openCommentModal(article.id);
+        }
+        if (popupElements.commentBtn) {
+            popupElements.commentBtn.onclick = () => openCommentModal(article.id);
+        }
+    }
+
+    function closePopup() {
+        popup.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    function openCommentModal(articleId) {
+        if (popupElements.commentModal) {
+            popupElements.commentModal.classList.add('active');
+            loadComments(articleId);
+        }
+    }
+
+    function closeCommentModal() {
+        if (popupElements.commentModal) {
+            popupElements.commentModal.classList.remove('active');
+        }
+    }
+
+    async function loadComments(articleId) {
+        try {
+            const response = await fetch(`control/get-comments.php?article_id=${articleId}`);
+            const comments = await response.json();
+            renderComments(comments);
+        } catch (error) {
+            console.error('Failed to load comments:', error);
+            if (popupElements.commentsList) {
+                popupElements.commentsList.innerHTML = '<p>Error loading comments.</p>';
+            }
+        }
+    }
+
+    function renderComments(comments) {
+        if (popupElements.commentsList) {
+            popupElements.commentsList.innerHTML = '';
+            if (comments.length === 0) {
+                popupElements.commentsList.innerHTML = '<p>No comments yet. Be the first to comment!</p>';
+                return;
+            }
+            comments.forEach(comment => {
+                const commentElement = document.createElement('div');
+                commentElement.className = 'comment-item';
+                commentElement.innerHTML = `
+                    <p><strong>${htmlspecialchars(comment.author)}:</strong> ${htmlspecialchars(comment.comment)}</p>
+                    <small>${new Date(comment.created_at).toLocaleString()}</small>
+                `;
+                popupElements.commentsList.appendChild(commentElement);
+            });
+        }
+    }
+
+    if (popupElements.commentForm) {
+        popupElements.commentForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            try {
+                const response = await fetch('control/add-comment.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                if (result.success) {
+                    this.reset();
+                    loadComments(formData.get('article_id'));
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Failed to submit comment:', error);
+                alert('An error occurred while submitting your comment.');
+            }
+        });
+    }
+
+    readMoreButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            openPopup(this.dataset.article);
+        });
+    });
+
+    if (closeBtn) closeBtn.addEventListener('click', closePopup);
+    if (popupBackdrop) popupBackdrop.addEventListener('click', closePopup);
+    if (popupElements.commentModalClose) popupElements.commentModalClose.addEventListener('click', closeCommentModal);
+    
+    const commentBackdrop = document.querySelector('#commentModal .popup-backdrop');
+    if (commentBackdrop) {
+        commentBackdrop.addEventListener('click', closeCommentModal);
+    }
+
+    function htmlspecialchars(str) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return str.replace(/[&<>"']/g, m => map[m]);
+    }
+});
+</script>
 

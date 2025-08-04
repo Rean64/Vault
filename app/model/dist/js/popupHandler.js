@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         enhancedPopup.classList.add('active');
 
             if (articleData) {
-                popupImage.src = `app/control/assets/images/activities/${articleData.image}`;
+                popupImage.src = `../../assets/images/activities/${articleData.image}`;
                 popupCategory.textContent = articleData.category || 'General';
                 popupDate.textContent = new Date(articleData.date).toLocaleDateString();
                 // Calculate read time based on full content

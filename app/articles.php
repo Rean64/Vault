@@ -50,7 +50,6 @@ require_once "header.php";
             <div class="popup-actions">
                 <button class="popup-action-btn" id="popupBookmark"><i class="far fa-bookmark"></i></button>
                 <button class="popup-action-btn" id="popupShare"><i class="fas fa-share-alt"></i></button>
-                <button class="popup-action-btn" id="popupPrint"><i class="fas fa-print"></i></button>
             </div>
         </div>
         <div class="popup-body">

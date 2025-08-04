@@ -134,7 +134,6 @@
 <script src="model/dist/vendor/purecounter/purecounter_vanilla.js"></script>
 <script src="model/dist/vendor/swiper/swiper-bundle.min.js"></script>
 
-<!-- Template Main JS File -->
 <script src="model/dist/js/main.js"></script>
 
 </body>
@@ -566,8 +565,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Template Main JS File -->
 <script src="model/dist/js/main.js"></script>
-<script src="model/dist/js/popupHandler.js"></script>
-<script src="model/dist/js/commentHandler.js"></script>
 
 
 
